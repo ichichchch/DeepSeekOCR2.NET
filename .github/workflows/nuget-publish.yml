@@ -1,0 +1,31 @@
+name: nuget-publish
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore .\dotnet\DeepSeek.OCR2.sln
+      - name: Build
+        run: dotnet build .\dotnet\DeepSeek.OCR2.sln -c Release --no-restore
+      - name: Pack
+        run: dotnet pack .\dotnet\src\DeepSeek.OCR2\DeepSeek.OCR2.csproj -c Release -o .\artifacts --no-build -p:RepositoryBranch=${{ github.ref_name }} -p:RepositoryCommit=${{ github.sha }}
+      - name: Push nupkg
+        if: ${{ secrets.NUGET_API_KEY != '' }}
+        run: dotnet nuget push .\artifacts\*.nupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Push snupkg
+        if: ${{ secrets.NUGET_API_KEY != '' }}
+        run: dotnet nuget push .\artifacts\*.snupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+

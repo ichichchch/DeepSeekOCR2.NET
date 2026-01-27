@@ -72,6 +72,9 @@ Console.WriteLine(result.Text);
 - **Owners**：nuget.org 的包所有者最终由你上传时使用的账号/组织决定；建议用你的组织账号作为 owner，并通过 nuget.org 后台添加/移除 owners。工程里的 `Owners` 字段仅作为元数据展示用（不同站点可能忽略）。
 - **RepositoryBranch/Commit**：本包在 CI（GitHub Actions）环境下会自动读取 `GITHUB_REF_NAME` / `GITHUB_SHA` 并写入包元数据；也支持在打包命令里显式覆盖：
   - `dotnet pack -p:RepositoryBranch=main -p:RepositoryCommit=<commitSha>`
+- **自动发布（GitHub Actions）**：
+  - 在仓库 Secrets 添加 `NUGET_API_KEY`（nuget.org 生成的 API Key）
+  - 推送 tag `v*`（例如 `v0.1.7`）会触发发布工作流 `nuget-publish`
 
 ### HTTP 协议
 
