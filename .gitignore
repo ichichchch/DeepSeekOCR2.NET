@@ -1,0 +1,11 @@
+.vscode/
+.vs/
+.idea/
+
+__pycache__/
+*.pyc
+
+dotnet/**/bin/
+dotnet/**/obj/
+dotnet/nupkg/
+artifacts/

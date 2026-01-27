@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net8.0;net6.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <PackageId>DeepSeek.OCR2</PackageId>
+    <Version>0.1.7</Version>
+    <Title>DeepSeek OCR2 .NET Wrapper</Title>
+    <Authors>ichi</Authors>
+    <Company>ichi</Company>
+    <Owners>ichi</Owners>
+    <Copyright>Copyright (c) ichi</Copyright>
+    <Description>.NET client and local-runner wrapper for DeepSeek-OCR-2 (Python backend).</Description>
+    <PackageTags>deepseek;ocr;llm;vision;transformers;python;vllm;http;client</PackageTags>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <RepositoryUrl>https://github.com/ichichchch/DeepSeekOCR2.NET.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/ichichchch/DeepSeekOCR2.NET</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <RepositoryBranch Condition="'$(RepositoryBranch)' == '' and '$(GITHUB_REF_NAME)' != ''">$(GITHUB_REF_NAME)</RepositoryBranch>
+    <RepositoryCommit Condition="'$(RepositoryCommit)' == '' and '$(GITHUB_SHA)' != ''">$(GITHUB_SHA)</RepositoryCommit>
+    <PackageReleaseNotes>
+- Add venv bootstrap + runtime requirements embedding
+- Add torch install presets and offline wheels support
+- Add net10.0 target framework
+- Fix license metadata for nuget.org (Apache-2.0)
+- Add package metadata for nuget.org (tags, icon, repository info)
+    </PackageReleaseNotes>
+
+    <IsPackable>true</IsPackable>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Python\**\*.py" />
+    <EmbeddedResource Include="Python\**\*.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Link="README.md" Pack="true" PackagePath="" />
+    <None Include="..\..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath="" />
+    <None Include="icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>

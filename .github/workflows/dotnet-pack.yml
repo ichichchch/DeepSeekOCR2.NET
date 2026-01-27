@@ -1,0 +1,30 @@
+name: dotnet-pack
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  pack:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore .\dotnet\DeepSeek.OCR2.sln
+      - name: Build
+        run: dotnet build .\dotnet\DeepSeek.OCR2.sln -c Release --no-restore
+      - name: Pack
+        run: dotnet pack .\dotnet\src\DeepSeek.OCR2\DeepSeek.OCR2.csproj -c Release -o .\artifacts --no-build -p:RepositoryBranch=${{ github.ref_name }} -p:RepositoryCommit=${{ github.sha }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: artifacts\*.nupkg
+
