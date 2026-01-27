@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
 
     <PackageId>DeepSeek.OCR2</PackageId>
-    <Version>0.1.7</Version>
+    <Version>0.1.8</Version>
     <Title>DeepSeek OCR2 .NET Wrapper</Title>
     <Authors>ichi</Authors>
     <Company>ichi</Company>
@@ -32,6 +32,7 @@
 - Add net10.0 target framework
 - Fix license metadata for nuget.org (Apache-2.0)
 - Add package metadata for nuget.org (tags, icon, repository info)
+- Trigger nuget publish workflow for this release
     </PackageReleaseNotes>
 
     <IsPackable>true</IsPackable>
