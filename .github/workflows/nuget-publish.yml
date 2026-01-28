@@ -21,11 +21,36 @@ jobs:
       - name: Build
         run: dotnet build .\dotnet\DeepSeek.OCR2.sln -c Release --no-restore
       - name: Pack
-        run: dotnet pack .\dotnet\src\DeepSeek.OCR2\DeepSeek.OCR2.csproj -c Release -o .\artifacts --no-build -p:RepositoryBranch=${{ github.ref_name }} -p:RepositoryCommit=${{ github.sha }}
-      - name: Push nupkg
-        if: ${{ secrets.NUGET_API_KEY != '' }}
-        run: dotnet nuget push .\artifacts\*.nupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
-      - name: Push snupkg
-        if: ${{ secrets.NUGET_API_KEY != '' }}
-        run: dotnet nuget push .\artifacts\*.snupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: pwsh .\dotnet\pack.ps1 -Configuration Release -Output artifacts
+      - name: Push packages
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if (-not $env:NUGET_API_KEY) { Write-Host "NUGET_API_KEY not set; skipping push"; exit 0 }
+          dotnet nuget push .\dotnet\artifacts\DeepSeek.OCR2*.nupkg --api-key "$env:NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push .\dotnet\artifacts\DeepSeek.OCR2*.snupkg --api-key "$env:NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Unlist internal packages
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if (-not $env:NUGET_API_KEY) { Write-Host "NUGET_API_KEY not set; skipping unlist"; exit 0 }
+          $ver = "${{ github.ref_name }}"
+          if ($ver.StartsWith("v")) { $ver = $ver.Substring(1) }
+          $source = "https://api.nuget.org/v3/index.json"
+          $ids = @(
+            "DeepSeek.OCR2.Core",
+            "DeepSeek.OCR2.Assets.Python.win-x64",
+            "DeepSeek.OCR2.Assets.Wheels.win-x64",
+            "DeepSeek.OCR2.Assets.Model.DeepSeekOCR2"
+          )
+          foreach ($id in $ids) {
+            try {
+              dotnet nuget delete $id $ver --api-key "$env:NUGET_API_KEY" --source $source --non-interactive
+            }
+            catch {
+              Write-Host "Unlist failed for $id $ver: $($_.Exception.Message)"
+            }
+          }
 
