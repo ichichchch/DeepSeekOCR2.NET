@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+
+    <PackageId>DeepSeek.OCR2.Bundled</PackageId>
+    <Version>0.3.0</Version>
+    <Title>DeepSeek OCR2 Bundled Assets</Title>
+    <Description>Bundled python runtime + wheels/torch + model snapshot for DeepSeek.OCR2 (offline distribution).</Description>
+    <PackageTags>deepseek;ocr;python;torch;offline;model;bundled</PackageTags>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/ichichchch/DeepSeekOCR2.NET.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <RepositoryBranch Condition="'$(RepositoryBranch)' == '' and '$(GITHUB_REF_NAME)' != ''">$(GITHUB_REF_NAME)</RepositoryBranch>
+    <RepositoryCommit Condition="'$(RepositoryCommit)' == '' and '$(GITHUB_SHA)' != ''">$(GITHUB_SHA)</RepositoryCommit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeepSeek.OCR2\DeepSeek.OCR2.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Link="README.md" Pack="true" PackagePath="" />
+    <None Include="..\..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath="" />
+    <None Include="..\DeepSeek.OCR2\icon.png" Link="icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('..\DeepSeek.OCR2\Bundled')">
+    <None Include="..\DeepSeek.OCR2\Bundled\**\*"
+          Pack="true"
+          PackagePath="contentFiles\any\any\DeepSeek.OCR2\bundled\%(RecursiveDir)%(Filename)%(Extension)"
+          PackageCopyToOutput="true" />
+  </ItemGroup>
+
+</Project>

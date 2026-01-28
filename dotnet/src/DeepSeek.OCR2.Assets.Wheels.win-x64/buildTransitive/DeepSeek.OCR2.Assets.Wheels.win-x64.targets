@@ -1,0 +1,9 @@
+<Project>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)..\\contentFiles\\any\\any\\DeepSeek.OCR2\\bundled\\wheels\\win-x64\\**\\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>DeepSeek.OCR2\bundled\wheels\win-x64\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </Content>
+  </ItemGroup>
+</Project>
+

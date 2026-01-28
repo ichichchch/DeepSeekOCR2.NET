@@ -21,7 +21,8 @@ jobs:
       - name: Build
         run: dotnet build .\dotnet\DeepSeek.OCR2.sln -c Release --no-restore
       - name: Pack
-        run: pwsh .\dotnet\pack.ps1 -Configuration Release -Output artifacts
+        working-directory: dotnet
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\pack.ps1 -Configuration Release -Output artifacts
       - name: Push packages
         shell: pwsh
         env:

@@ -7,14 +7,15 @@
 
 ### 先决条件
 
-- 已安装 Python（建议 3.10+，官方示例环境为 3.12）
-- 推理依赖（`torch`/`transformers` 等）可以由你预装，也可以让本包启动时自动创建 venv 并安装一部分依赖（见下文）
-- 如果希望更快推理，按官方 README 安装 `flash-attn`（否则服务端会自动降级到不指定 `_attn_implementation` 的加载方式）
+- Windows：无需预装 Python。本包默认会在首次运行时自动下载便携版 Python（默认 3.10.11）并引导 pip/venv。
+- Linux/macOS：建议预装 Python 3.10+（或手动指定 `PythonExecutablePath`）。
+- 推理依赖（`torch`/`transformers` 等）默认会在首次运行时自动创建 venv 并安装（CPU 预设）；也支持离线 wheels（见下文）。
+- 如果希望更快推理，可按上游说明安装 `flash-attn`（否则服务端会自动降级）。
 
 ### 依赖“打包/自带”能做到什么
 
-- 纯把 `torch` / CUDA / `flash-attn` 这类依赖“直接塞进 NuGet”在体积和平台适配上不现实（Windows/Linux、CPU/CUDA 版本差异、wheel 很大）。
-- 这里提供的折中方案是：NuGet **内置 requirements 列表**，启动时可选 **自动创建 venv + pip 安装依赖**（仍然需要你机器上有 Python；安装 torch 可能需要网络/指定镜像/指定 CUDA 轮子）。
+- 默认模式：首次运行时自动创建 venv 并通过 pip 安装依赖（Windows 可自动下载便携 Python）。
+- 离线全量模式：把 **Python runtime + wheels/torch + 模型权重** 一起打进同一个 `.nupkg`（包体会非常大，通常只能发布到私有 NuGet 源）。
 
 ### 许可证与归属
 
@@ -27,37 +28,27 @@
 ```csharp
 using DeepSeek.OCR2;
 
-await using var server = await DeepSeekOcr2LocalServer.StartAsync(new DeepSeekOcr2LocalServerOptions
-{
-    PythonExecutablePath = "python",
-    EnsureVenv = true,
-    TorchInstallPreset = DeepSeekOcr2TorchInstallPreset.Cuda118,
-    ModelName = "deepseek-ai/DeepSeek-OCR-2",
-    Device = "cuda",
-    PipInstallArguments = new[]
-    {
-        "--upgrade",
-    },
-});
+var result = await DeepSeekOcr2.RecognizeFileAsync(@"D:\test.jpg");
+Console.WriteLine(result.Text);
+```
 
-using var http = new HttpClient { BaseAddress = server.BaseUri };
-var client = new DeepSeekOcr2Client(http);
+如需复用同一个模型进程（多次调用更快）：
 
-var request = DeepSeekOcr2Request.FromFile(@"D:\test.jpg") with
-{
-    Prompt = "<image>\nFree OCR.",
-    SaveResults = true,
-};
+```csharp
+using DeepSeek.OCR2;
 
-var result = await client.RecognizeAsync(request);
+await using var session = await DeepSeekOcr2.CreateSessionAsync();
+
+var request = DeepSeekOcr2Request.FromFile(@"D:\test.jpg") with { Prompt = "<image>\nFree OCR." };
+var result = await session.Client.RecognizeAsync(request);
 Console.WriteLine(result.Text);
 ```
 
 ### Torch 自动安装选项
 
 - `TorchInstallPreset`
-  - `None`：不安装 torch（默认）
-  - `Cpu`：按 PyTorch 官方 CPU 索引安装
+  - `Cpu`：按 PyTorch 官方 CPU 索引安装（默认）
+  - `None`：不安装 torch（适合你自行管理 Python 环境）
   - `Cuda118`：按 PyTorch 官方 cu118 索引安装（与本仓库 README 示例一致）
 - `OfflineWheelDirectory`：指定离线 wheel 目录（会传给 pip：`--find-links <dir>`）
 - `PreferOfflineWheels`：为 true 时额外加 `--no-index`（强制只从离线目录找）
@@ -65,7 +56,7 @@ Console.WriteLine(result.Text);
 
 ### 目标框架
 
-- DeepSeek.OCR2：net6.0 / net8.0 / net10.0
+- DeepSeek.OCR2：netstandard2.0 / net6.0 / net8.0 / net10.0
 
 ### 发布到 nuget.org（建议）
 
@@ -75,6 +66,58 @@ Console.WriteLine(result.Text);
 - **自动发布（GitHub Actions）**：
   - 在仓库 Secrets 添加 `NUGET_API_KEY`（nuget.org 生成的 API Key）
   - 推送 tag `v*`（例如 `v0.1.7`）会触发发布工作流 `nuget-publish`
+
+### 本地打包/推送
+
+- 打包（元包+依赖包）：`pwsh .\pack.ps1`（输出到 `dotnet/artifacts/`）
+- 推送到 nuget.org：`pwsh .\push.ps1 -ApiKey <key>`（默认推送 `DeepSeek.OCR2*` 相关包；不包含 `DeepSeek.OCR2.Bundled` 单包超大资产方案与 `DeepSeek.OCR2.Full.win-x64` 兼容包）
+- 如需推送其他包：使用 `-PackageGlob` 显式指定
+
+### 发布到 nuget.org（NuGet Gallery）
+
+- 本仓库的 GitHub Actions 工作流 `nuget-publish` 会在推送 tag `v*` 时打包并推送 `DeepSeek.OCR2`（元包）以及其依赖包（`DeepSeek.OCR2.Core`、`DeepSeek.OCR2.Assets.*`）。
+- 不会推送 `DeepSeek.OCR2.Bundled`（单包超大资产方案）与 `DeepSeek.OCR2.Full.win-x64`（历史兼容包）。
+- 发布后会自动把 `DeepSeek.OCR2.Core` 与 `DeepSeek.OCR2.Assets.*` 设为 Unlisted（用户搜索只看到 `DeepSeek.OCR2`，但依赖仍可正常还原）。
+- 需要在仓库 Secrets 配置 `NUGET_API_KEY`。
+
+也可以本地发布（会打包、推送、并可选 Unlist 内部包）：
+
+```powershell
+pwsh .\publish-nuget.ps1 -Version 0.3.0
+```
+
+### 离线全量包（模型+torch+wheels+Python runtime）
+
+可以拆成多个 NuGet 包来实现“全量离线”，优点是：每个包体积可控、可按需选择（例如不同平台/不同 torch 版本）；缺点是：发布/版本管理更复杂，下载包数量更多。
+
+推荐引用方式（win-x64）：
+
+- 只引用一个包：`DeepSeek.OCR2`（会自动拉起 `DeepSeek.OCR2.Core` + Python/wheels/模型资源包）
+- 如只要在线安装（不带离线资产）：引用 `DeepSeek.OCR2.Core`
+
+目录结构（会被打入 `.nupkg` 并在引用方输出目录自动复制到 `DeepSeek.OCR2/bundled/`）：
+
+- `dotnet/src/DeepSeek.OCR2/Bundled/python/<rid>/<version>/...`
+- `dotnet/src/DeepSeek.OCR2/Bundled/wheels/<rid>/*.whl`
+- `dotnet/src/DeepSeek.OCR2/Bundled/models/DeepSeek-OCR-2/...`
+
+准备资产（会下载大量内容）：
+
+```powershell
+pwsh .\bundle\prepare-bundled-assets.ps1 -TorchPreset cpu -ModelId deepseek-ai/DeepSeek-OCR-2
+```
+
+随后打包：
+
+```powershell
+pwsh .\pack.ps1
+```
+
+运行时行为：
+
+- 若检测到 `DeepSeek.OCR2/bundled/python/.../python.exe`：优先使用随包 Python，不再下载。
+- 若检测到 `DeepSeek.OCR2/bundled/wheels/<rid>`：默认作为离线 wheel 源（`--no-index --find-links`）。
+- 若 `ModelName` 仍为默认 `deepseek-ai/DeepSeek-OCR-2` 且存在 `DeepSeek.OCR2/bundled/models/DeepSeek-OCR-2`：优先加载离线模型目录。
 
 ### HTTP 协议
 

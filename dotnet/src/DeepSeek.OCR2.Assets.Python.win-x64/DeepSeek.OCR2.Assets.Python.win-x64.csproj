@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+
+    <PackageId>DeepSeek.OCR2.Assets.Python.win-x64</PackageId>
+    <Version>0.3.0</Version>
+    <Title>DeepSeek OCR2 Bundled Python Runtime (win-x64)</Title>
+    <Description>Bundled Python runtime for DeepSeek.OCR2 (win-x64). Copy-to-output via buildTransitive.</Description>
+    <PackageTags>deepseek;ocr;python;runtime;offline;win-x64</PackageTags>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/ichichchch/DeepSeekOCR2.NET.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeepSeek.OCR2\DeepSeek.OCR2.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath="" />
+    <None Include="..\DeepSeek.OCR2\icon.png" Link="icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('..\DeepSeek.OCR2\Bundled\python\win-x64')">
+    <None Include="..\DeepSeek.OCR2\Bundled\python\win-x64\**\*"
+          Pack="true"
+          PackagePath="contentFiles\any\any\DeepSeek.OCR2\bundled\python\win-x64\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="buildTransitive\DeepSeek.OCR2.Assets.Python.win-x64.targets"
+          Pack="true"
+          PackagePath="buildTransitive\" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+<Project>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)..\\contentFiles\\any\\any\\DeepSeek.OCR2\\bundled\\models\\DeepSeek-OCR-2\\**\\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>DeepSeek.OCR2\bundled\models\DeepSeek-OCR-2\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </Content>
+  </ItemGroup>
+</Project>
+

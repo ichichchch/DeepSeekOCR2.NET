@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+
+    <PackageId>DeepSeek.OCR2</PackageId>
+    <Version>0.3.0</Version>
+    <Title>DeepSeek OCR2 .NET Wrapper</Title>
+    <Description>Meta-package that pulls DeepSeek.OCR2.Core plus offline assets packages.</Description>
+    <PackageTags>deepseek;ocr;offline;full;meta</PackageTags>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/ichichchch/DeepSeekOCR2.NET.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/ichichchch/DeepSeekOCR2.NET</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <RepositoryBranch Condition="'$(RepositoryBranch)' == '' and '$(GITHUB_REF_NAME)' != ''">$(GITHUB_REF_NAME)</RepositoryBranch>
+    <RepositoryCommit Condition="'$(RepositoryCommit)' == '' and '$(GITHUB_SHA)' != ''">$(GITHUB_SHA)</RepositoryCommit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeepSeek.OCR2\DeepSeek.OCR2.csproj" />
+    <ProjectReference Include="..\DeepSeek.OCR2.Assets.Python.win-x64\DeepSeek.OCR2.Assets.Python.win-x64.csproj" />
+    <ProjectReference Include="..\DeepSeek.OCR2.Assets.Wheels.win-x64\DeepSeek.OCR2.Assets.Wheels.win-x64.csproj" />
+    <ProjectReference Include="..\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Link="README.md" Pack="true" PackagePath="" />
+    <None Include="..\..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath="" />
+    <None Include="..\DeepSeek.OCR2\icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>
+

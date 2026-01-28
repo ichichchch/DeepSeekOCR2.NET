@@ -1,0 +1,19 @@
+{
+  "DeepSeekOcr2": {
+    "PythonExecutablePath": "",
+    "AutoSetupPython": true,
+    "PythonRuntimeVersion": "3.10.11",
+    "EnsureVenv": true,
+    "TorchInstallPreset": "Cpu",
+    "OfflineWheelDirectory": null,
+    "PreferOfflineWheels": false,
+    "ModelName": "deepseek-ai/DeepSeek-OCR-2",
+    "Device": "cpu",
+    "DType": "float32",
+    "AttnImpl": "sdpa",
+    "Host": "127.0.0.1",
+    "Port": 0,
+    "StartupTimeoutSeconds": 120
+  }
+}
+

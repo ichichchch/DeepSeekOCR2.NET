@@ -30,9 +30,11 @@ internal static class PythonVenvBootstrapper
             await RunAsync(
                 fileName: systemPythonExe,
                 workingDirectory: venvDir,
-                arguments: new[] { "-m", "venv", venvDir },
+                arguments: new[] { "-m", "venv", "--without-pip", venvDir },
                 cancellationToken: cancellationToken).ConfigureAwait(false);
         }
+
+        await PythonPipBootstrapper.EnsurePipAsync(venvPython, venvDir, cancellationToken).ConfigureAwait(false);
 
         await RunAsync(
             fileName: venvPython,
@@ -96,8 +98,7 @@ internal static class PythonVenvBootstrapper
             CreateNoWindow = true,
         };
 
-        foreach (var arg in arguments)
-            psi.ArgumentList.Add(arg);
+        ProcessUtil.AddArguments(psi, arguments);
 
         using var process = new Process { StartInfo = psi };
         if (!process.Start())
@@ -106,7 +107,7 @@ internal static class PythonVenvBootstrapper
         var stdoutTask = process.StandardOutput.ReadToEndAsync();
         var stderrTask = process.StandardError.ReadToEndAsync();
 
-        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+        await ProcessUtil.WaitForExitAsync(process, cancellationToken).ConfigureAwait(false);
         var stdout = await stdoutTask.ConfigureAwait(false);
         var stderr = await stderrTask.ConfigureAwait(false);
 

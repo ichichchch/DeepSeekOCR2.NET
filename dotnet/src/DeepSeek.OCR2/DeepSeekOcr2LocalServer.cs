@@ -30,6 +30,13 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
 
         var host = string.IsNullOrWhiteSpace(options.Host) ? "127.0.0.1" : options.Host;
         var port = options.Port > 0 ? options.Port : GetFreeTcpPort(host);
+        var modelName = options.ModelName;
+        if (string.Equals(modelName, "deepseek-ai/DeepSeek-OCR-2", StringComparison.Ordinal))
+        {
+            var bundled = DeepSeekOcr2BundledAssets.TryGetBundledModelDirectory();
+            if (!string.IsNullOrWhiteSpace(bundled))
+                modelName = bundled;
+        }
 
         var workingDir = options.WorkingDirectory;
         if (string.IsNullOrWhiteSpace(workingDir))
@@ -42,10 +49,23 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
 
         Directory.CreateDirectory(workingDir);
         var scriptPath = EmbeddedPythonScripts.ExtractServerScript(workingDir);
-        var pythonExe = options.PythonExecutablePath;
+        var pythonExe = await PythonRuntimeBootstrapper.ResolvePythonExecutableAsync(options, cancellationToken).ConfigureAwait(false);
 
         if (options.EnsureVenv)
         {
+            if (string.IsNullOrWhiteSpace(options.OfflineWheelDirectory))
+            {
+                var bundledWheels = DeepSeekOcr2BundledAssets.TryGetBundledWheelsDirectory();
+                if (!string.IsNullOrWhiteSpace(bundledWheels))
+                {
+                    options = options with
+                    {
+                        OfflineWheelDirectory = bundledWheels,
+                        PreferOfflineWheels = true,
+                    };
+                }
+            }
+
             var venvDir = options.VenvDirectory;
             if (string.IsNullOrWhiteSpace(venvDir))
             {
@@ -89,20 +109,17 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
             RedirectStandardError = true,
             CreateNoWindow = true,
         };
-
-        psi.ArgumentList.Add(scriptPath);
-        psi.ArgumentList.Add("--host");
-        psi.ArgumentList.Add(host);
-        psi.ArgumentList.Add("--port");
-        psi.ArgumentList.Add(port.ToString());
-        psi.ArgumentList.Add("--model");
-        psi.ArgumentList.Add(options.ModelName);
-        psi.ArgumentList.Add("--device");
-        psi.ArgumentList.Add(options.Device);
-        psi.ArgumentList.Add("--dtype");
-        psi.ArgumentList.Add(options.DType);
-        psi.ArgumentList.Add("--attn-impl");
-        psi.ArgumentList.Add(options.AttnImpl);
+        var args = new System.Collections.Generic.List<string>
+        {
+            scriptPath,
+            "--host", host,
+            "--port", port.ToString(),
+            "--model", modelName,
+            "--device", options.Device,
+            "--dtype", options.DType,
+            "--attn-impl", options.AttnImpl,
+        };
+        ProcessUtil.AddArguments(psi, args);
 
         var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
         if (!process.Start())
@@ -189,7 +206,11 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
         try
         {
             if (!_process.HasExited)
+#if NET6_0_OR_GREATER
                 _process.Kill(entireProcessTree: true);
+#else
+                _process.Kill();
+#endif
         }
         catch
         {
@@ -201,7 +222,7 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
     public ValueTask DisposeAsync()
     {
         Dispose();
-        return ValueTask.CompletedTask;
+        return default;
     }
 
     private static int GetFreeTcpPort(string host)

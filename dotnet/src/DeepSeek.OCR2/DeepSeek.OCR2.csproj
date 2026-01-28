@@ -1,12 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0;net8.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0;net8.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <IncludeBundledAssets>false</IncludeBundledAssets>
 
-    <PackageId>DeepSeek.OCR2</PackageId>
-    <Version>0.1.8</Version>
+    <PackageId>DeepSeek.OCR2.Core</PackageId>
+    <Version>0.3.0</Version>
     <Title>DeepSeek OCR2 .NET Wrapper</Title>
     <Authors>ichi</Authors>
     <Company>ichi</Company>
@@ -27,12 +31,10 @@
     <RepositoryBranch Condition="'$(RepositoryBranch)' == '' and '$(GITHUB_REF_NAME)' != ''">$(GITHUB_REF_NAME)</RepositoryBranch>
     <RepositoryCommit Condition="'$(RepositoryCommit)' == '' and '$(GITHUB_SHA)' != ''">$(GITHUB_SHA)</RepositoryCommit>
     <PackageReleaseNotes>
-- Add venv bootstrap + runtime requirements embedding
-- Add torch install presets and offline wheels support
-- Add net10.0 target framework
-- Fix license metadata for nuget.org (Apache-2.0)
-- Add package metadata for nuget.org (tags, icon, repository info)
-- Trigger nuget publish workflow for this release
+- Add one-click API (DeepSeekOcr2/DeepSeekOcr2Session)
+- Add netstandard2.0 target framework
+- Add Windows auto Python+pIP bootstrap (portable python download)
+- Add config template as contentFiles with copy-to-output
     </PackageReleaseNotes>
 
     <IsPackable>true</IsPackable>
@@ -49,10 +51,23 @@
     <None Include="..\..\README.md" Link="README.md" Pack="true" PackagePath="" />
     <None Include="..\..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath="" />
     <None Include="icon.png" Pack="true" PackagePath="" />
+    <None Include="Templates\**\*.json" Pack="true" PackagePath="contentFiles\any\any\DeepSeek.OCR2\templates\" PackageCopyToOutput="true" />
+    <None Include="buildTransitive\DeepSeek.OCR2.Core.targets" Pack="true" PackagePath="buildTransitive\" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('Bundled') AND '$(IncludeBundledAssets)' == 'true'">
+    <None Include="Bundled\**\*"
+          Pack="true"
+          PackagePath="contentFiles\any\any\DeepSeek.OCR2\bundled\%(RecursiveDir)%(Filename)%(Extension)"
+          PackageCopyToOutput="true" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
 </Project>

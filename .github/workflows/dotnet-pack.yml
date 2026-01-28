@@ -22,9 +22,9 @@ jobs:
       - name: Build
         run: dotnet build .\dotnet\DeepSeek.OCR2.sln -c Release --no-restore
       - name: Pack
-        run: dotnet pack .\dotnet\src\DeepSeek.OCR2\DeepSeek.OCR2.csproj -c Release -o .\artifacts --no-build -p:RepositoryBranch=${{ github.ref_name }} -p:RepositoryCommit=${{ github.sha }}
+        working-directory: dotnet
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\pack.ps1 -Configuration Release -Output artifacts
       - uses: actions/upload-artifact@v4
         with:
           name: nupkg
-          path: artifacts\*.nupkg
-
+          path: dotnet\artifacts\*.nupkg

@@ -4,13 +4,19 @@ namespace DeepSeek.OCR2;
 
 public sealed record DeepSeekOcr2LocalServerOptions
 {
-    public string PythonExecutablePath { get; init; } = "python";
+    public string PythonExecutablePath { get; init; } = "";
 
-    public bool EnsureVenv { get; init; } = false;
+    public bool AutoSetupPython { get; init; } = true;
+
+    public string PythonRuntimeVersion { get; init; } = "3.10.11";
+
+    public string? PythonRuntimeDirectory { get; init; }
+
+    public bool EnsureVenv { get; init; } = true;
 
     public string? VenvDirectory { get; init; }
 
-    public DeepSeekOcr2TorchInstallPreset TorchInstallPreset { get; init; } = DeepSeekOcr2TorchInstallPreset.None;
+    public DeepSeekOcr2TorchInstallPreset TorchInstallPreset { get; init; } = DeepSeekOcr2TorchInstallPreset.Cpu;
 
     public string? OfflineWheelDirectory { get; init; }
 
@@ -30,11 +36,11 @@ public sealed record DeepSeekOcr2LocalServerOptions
 
     public string ModelName { get; init; } = "deepseek-ai/DeepSeek-OCR-2";
 
-    public string Device { get; init; } = "cuda";
+    public string Device { get; init; } = "cpu";
 
-    public string DType { get; init; } = "bfloat16";
+    public string DType { get; init; } = "float32";
 
-    public string AttnImpl { get; init; } = "flash_attention_2";
+    public string AttnImpl { get; init; } = "sdpa";
 
     public string? WorkingDirectory { get; init; }
 
