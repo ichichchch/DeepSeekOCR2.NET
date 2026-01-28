@@ -16,6 +16,9 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
+      - name: Prepare local artifacts source
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path .\dotnet\artifacts | Out-Null
       - name: Restore
         run: dotnet restore .\dotnet\DeepSeek.OCR2.sln
       - name: Build
