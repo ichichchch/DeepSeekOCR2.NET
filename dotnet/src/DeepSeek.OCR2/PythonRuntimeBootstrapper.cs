@@ -95,14 +95,14 @@ internal static class PythonRuntimeBootstrapper
             if (!File.Exists(zipPath))
             {
                 var url = new Uri($"https://www.python.org/ftp/python/{version}/{zipName}");
-                await DownloadAsync(url, zipPath, cancellationToken).ConfigureAwait(false);
+                await DownloadAsync(url, zipPath, options.BootstrapDownloadTimeout, cancellationToken).ConfigureAwait(false);
             }
 
             ExtractZipOverwrite(zipPath, runtimeDir);
         }
 
         PatchEmbeddedPythonPth(runtimeDir);
-        await PythonPipBootstrapper.EnsurePipAsync(pythonExe, runtimeDir, cancellationToken).ConfigureAwait(false);
+        await PythonPipBootstrapper.EnsurePipAsync(pythonExe, runtimeDir, options.BootstrapDownloadTimeout, cancellationToken).ConfigureAwait(false);
         return pythonExe;
     }
 
@@ -165,9 +165,10 @@ internal static class PythonRuntimeBootstrapper
         }
     }
 
-    private static async Task DownloadAsync(Uri url, string targetPath, CancellationToken cancellationToken)
+    private static async Task DownloadAsync(Uri url, string targetPath, TimeSpan timeout, CancellationToken cancellationToken)
     {
         using var http = new HttpClient();
+        http.Timeout = timeout <= TimeSpan.Zero ? Timeout.InfiniteTimeSpan : timeout;
         using var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 

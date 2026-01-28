@@ -3,6 +3,8 @@ param(
   [string]$Source = "https://api.nuget.org/v3/index.json",
   [string]$ApiKey = $env:NUGET_API_KEY,
   [switch]$UnlistInternal = $true,
+  [bool]$IncludeBundled = $true,
+  [bool]$IncludeFull = $false,
   [switch]$DryRun
 )
 
@@ -29,12 +31,23 @@ if (-not $DryRun -and [string]::IsNullOrWhiteSpace($ApiKey)) {
   throw "ApiKey is required. Pass -ApiKey or set NUGET_API_KEY environment variable."
 }
 
-& .\pack.ps1 -Configuration Release -Output artifacts
+if ($IncludeBundled -and $IncludeFull) {
+  & .\pack.ps1 -Configuration Release -Output artifacts -PackBundled -PackFull
+}
+elseif ($IncludeBundled) {
+  & .\pack.ps1 -Configuration Release -Output artifacts -PackBundled
+}
+elseif ($IncludeFull) {
+  & .\pack.ps1 -Configuration Release -Output artifacts -PackFull
+}
+else {
+  & .\pack.ps1 -Configuration Release -Output artifacts
+}
 
 $packages = Get-ChildItem -Path ".\\artifacts\\DeepSeek.OCR2*.nupkg" | Where-Object {
   $_.Name -like "*.$Version.nupkg" -and
-  $_.Name -notlike "DeepSeek.OCR2.Bundled.*" -and
-  $_.Name -notlike "DeepSeek.OCR2.Full.*"
+  ($IncludeBundled -or $_.Name -notlike "DeepSeek.OCR2.Bundled.*") -and
+  ($IncludeFull -or $_.Name -notlike "DeepSeek.OCR2.Full.*")
 }
 
 foreach ($pkg in $packages) {

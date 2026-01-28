@@ -13,7 +13,8 @@
     "AttnImpl": "sdpa",
     "Host": "127.0.0.1",
     "Port": 0,
-    "StartupTimeoutSeconds": 120
+    "StartupTimeoutSeconds": 120,
+    "OcrRequestTimeoutSeconds": 1800,
+    "BootstrapDownloadTimeoutSeconds": 1800
   }
 }
-

@@ -9,7 +9,7 @@ namespace DeepSeek.OCR2;
 
 internal static class PythonPipBootstrapper
 {
-    public static async Task EnsurePipAsync(string pythonExe, string workingDirectory, CancellationToken cancellationToken)
+    public static async Task EnsurePipAsync(string pythonExe, string workingDirectory, TimeSpan downloadTimeout, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(pythonExe))
             throw new ArgumentException("Python executable path is required.", nameof(pythonExe));
@@ -24,7 +24,7 @@ internal static class PythonPipBootstrapper
 
         var getPipPath = Path.Combine(cacheDir, "get-pip.py");
         if (!File.Exists(getPipPath))
-            await DownloadAsync(new Uri("https://bootstrap.pypa.io/get-pip.py"), getPipPath, cancellationToken).ConfigureAwait(false);
+            await DownloadAsync(new Uri("https://bootstrap.pypa.io/get-pip.py"), getPipPath, downloadTimeout, cancellationToken).ConfigureAwait(false);
 
         var psi = new ProcessStartInfo
         {
@@ -56,9 +56,10 @@ internal static class PythonPipBootstrapper
         }
     }
 
-    private static async Task DownloadAsync(Uri url, string targetPath, CancellationToken cancellationToken)
+    private static async Task DownloadAsync(Uri url, string targetPath, TimeSpan timeout, CancellationToken cancellationToken)
     {
         using var http = new HttpClient();
+        http.Timeout = timeout <= TimeSpan.Zero ? Timeout.InfiniteTimeSpan : timeout;
         using var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 

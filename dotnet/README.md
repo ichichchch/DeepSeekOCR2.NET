@@ -20,7 +20,7 @@
 ### 许可证与归属
 
 - 上游仓库 DeepSeek-OCR-2 的许可证为 Apache License 2.0（见仓库根目录 LICENSE.txt）。
-- 本 NuGet 包仅做 .NET 调用封装与启动脚本分发，不包含模型权重；模型与其使用条款请以 deepseek-ai/DeepSeek-OCR-2（HuggingFace/上游仓库）为准。
+- 默认包（`DeepSeek.OCR2.Core`）仅做 .NET 调用封装与启动脚本分发，不包含模型权重；如需离线模型请使用 `DeepSeek.OCR2.Assets.Model.*` 或 `DeepSeek.OCR2.Bundled`。
 - 本封装仓库地址：https://github.com/ichichchch/DeepSeekOCR2.NET
 
 ### 最小用法（启动本地服务 + 调用 OCR）
@@ -29,6 +29,22 @@
 using DeepSeek.OCR2;
 
 var result = await DeepSeekOcr2.RecognizeFileAsync(@"D:\test.jpg");
+Console.WriteLine(result.Text);
+```
+
+> 说明：第一次调用 `/ocr` 时，Python 端可能需要从 HuggingFace 下载模型并完成初始化，耗时可能超过默认的 HttpClient 100 秒超时。可以通过 `DeepSeekOcr2LocalServerOptions.OcrRequestTimeout` 调大超时（或设为 `Timeout.InfiniteTimeSpan`）。
+
+```csharp
+using DeepSeek.OCR2;
+using System;
+
+var options = new DeepSeekOcr2LocalServerOptions
+{
+    OcrRequestTimeout = TimeSpan.FromMinutes(30),
+    BootstrapDownloadTimeout = TimeSpan.FromMinutes(30),
+};
+
+var result = await DeepSeekOcr2.RecognizeFileAsync(@"D:\test.jpg", serverOptions: options);
 Console.WriteLine(result.Text);
 ```
 
@@ -70,13 +86,13 @@ Console.WriteLine(result.Text);
 ### 本地打包/推送
 
 - 打包（元包+依赖包）：`pwsh .\pack.ps1`（输出到 `dotnet/artifacts/`）
-- 推送到 nuget.org：`pwsh .\push.ps1 -ApiKey <key>`（默认推送 `DeepSeek.OCR2*` 相关包；不包含 `DeepSeek.OCR2.Bundled` 单包超大资产方案与 `DeepSeek.OCR2.Full.win-x64` 兼容包）
+- 推送到 nuget.org：`pwsh .\push.ps1 -ApiKey <key>`（默认推送 `DeepSeek.OCR2*` 相关包；如需跳过超大包可加 `-IncludeBundled:$false`）
 - 如需推送其他包：使用 `-PackageGlob` 显式指定
 
 ### 发布到 nuget.org（NuGet Gallery）
 
 - 本仓库的 GitHub Actions 工作流 `nuget-publish` 会在推送 tag `v*` 时打包并推送 `DeepSeek.OCR2`（元包）以及其依赖包（`DeepSeek.OCR2.Core`、`DeepSeek.OCR2.Assets.*`）。
-- 不会推送 `DeepSeek.OCR2.Bundled`（单包超大资产方案）与 `DeepSeek.OCR2.Full.win-x64`（历史兼容包）。
+- 也会打包 `DeepSeek.OCR2.Bundled`（单包资产方案）。如果你准备了真实的 bundled 资产（模型/torch/python），该包体可能非常大，建议发布到私有 NuGet 源。
 - 发布后会自动把 `DeepSeek.OCR2.Core` 与 `DeepSeek.OCR2.Assets.*` 设为 Unlisted（用户搜索只看到 `DeepSeek.OCR2`，但依赖仍可正常还原）。
 - 需要在仓库 Secrets 配置 `NUGET_API_KEY`。
 
@@ -90,10 +106,21 @@ pwsh .\publish-nuget.ps1 -Version 0.3.0
 
 可以拆成多个 NuGet 包来实现“全量离线”，优点是：每个包体积可控、可按需选择（例如不同平台/不同 torch 版本）；缺点是：发布/版本管理更复杂，下载包数量更多。
 
-推荐引用方式（win-x64）：
+推荐引用方式（win-x64 / 分包资产，C1）：
 
-- 只引用一个包：`DeepSeek.OCR2`（会自动拉起 `DeepSeek.OCR2.Core` + Python/wheels/模型资源包）
+- 只引用一个包：`DeepSeek.OCR2`（meta 包，会自动拉起 `DeepSeek.OCR2.Core` + Python/wheels/模型资源包）
 - 如只要在线安装（不带离线资产）：引用 `DeepSeek.OCR2.Core`
+- 如要手动组合：直接引用 `DeepSeek.OCR2.Core` + `DeepSeek.OCR2.Assets.*`（按需选平台/模型包）
+
+推荐引用方式（单包资产，C2）：
+
+- 引用 `DeepSeek.OCR2.Bundled`：一个包内包含 python runtime + wheels + 模型快照（仍会依赖 `DeepSeek.OCR2.Core`）。适合私有 NuGet 源/离线分发（包体可能非常大）。
+
+示例（C2）：
+
+```xml
+<PackageReference Include="DeepSeek.OCR2.Bundled" Version="x.y.z" />
+```
 
 目录结构（会被打入 `.nupkg` 并在引用方输出目录自动复制到 `DeepSeek.OCR2/bundled/`）：
 
@@ -116,7 +143,7 @@ pwsh .\pack.ps1
 运行时行为：
 
 - 若检测到 `DeepSeek.OCR2/bundled/python/.../python.exe`：优先使用随包 Python，不再下载。
-- 若检测到 `DeepSeek.OCR2/bundled/wheels/<rid>`：默认作为离线 wheel 源（`--no-index --find-links`）。
+- 若检测到 `DeepSeek.OCR2/bundled/wheels/<rid>` 且目录内存在 `.whl`：默认作为离线 wheel 源（`--find-links`）；如显式启用 `PreferOfflineWheels=true` 则额外加 `--no-index`（严格离线）。
 - 若 `ModelName` 仍为默认 `deepseek-ai/DeepSeek-OCR-2` 且存在 `DeepSeek.OCR2/bundled/models/DeepSeek-OCR-2`：优先加载离线模型目录。
 
 ### HTTP 协议

@@ -10,7 +10,7 @@
     <NoWarn>$(NoWarn);NU5128</NoWarn>
 
     <PackageId>DeepSeek.OCR2.Full.win-x64</PackageId>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <Title>DeepSeek OCR2 Full Offline Distribution (win-x64)</Title>
     <Description>Meta-package that pulls DeepSeek.OCR2 plus bundled python runtime, wheels, and model (win-x64).</Description>
     <PackageTags>deepseek;ocr;offline;full;win-x64</PackageTags>

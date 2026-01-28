@@ -61,7 +61,6 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
                     options = options with
                     {
                         OfflineWheelDirectory = bundledWheels,
-                        PreferOfflineWheels = true,
                     };
                 }
             }
@@ -78,6 +77,7 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
             var (venvPython, venvPip) = await PythonVenvBootstrapper.EnsureVenvAsync(
                 systemPythonExe: pythonExe,
                 venvDir: venvDir,
+                bootstrapDownloadTimeout: options.BootstrapDownloadTimeout,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
 
             var basePipArgs = BuildPipCommonArgs(options);
@@ -241,6 +241,7 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
     private static async Task WaitForReadyAsync(Uri baseUri, TimeSpan timeout, Process process, CancellationToken cancellationToken)
     {
         using var httpClient = new HttpClient { BaseAddress = EnsureTrailingSlash(baseUri) };
+        httpClient.Timeout = TimeSpan.FromSeconds(2);
 
         var start = DateTimeOffset.UtcNow;
         while (DateTimeOffset.UtcNow - start < timeout)

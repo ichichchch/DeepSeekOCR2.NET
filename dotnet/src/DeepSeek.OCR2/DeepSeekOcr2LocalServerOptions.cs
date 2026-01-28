@@ -45,4 +45,8 @@ public sealed record DeepSeekOcr2LocalServerOptions
     public string? WorkingDirectory { get; init; }
 
     public TimeSpan StartupTimeout { get; init; } = TimeSpan.FromSeconds(120);
+
+    public TimeSpan OcrRequestTimeout { get; init; } = TimeSpan.FromMinutes(30);
+
+    public TimeSpan BootstrapDownloadTimeout { get; init; } = TimeSpan.FromMinutes(30);
 }

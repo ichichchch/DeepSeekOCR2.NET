@@ -21,12 +21,14 @@ jobs:
         shell: pwsh
         run: New-Item -ItemType Directory -Force -Path .\dotnet\artifacts | Out-Null
       - name: Restore
-        run: dotnet restore .\dotnet\DeepSeek.OCR2.sln
+        run: dotnet restore .\dotnet\DeepSeek.OCR2.ci.slnf
       - name: Build
-        run: dotnet build .\dotnet\DeepSeek.OCR2.sln -c Release --no-restore
+        run: dotnet build .\dotnet\DeepSeek.OCR2.ci.slnf -c Release --no-restore
       - name: Pack
         working-directory: dotnet
-        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\pack.ps1 -Configuration Release -Output artifacts
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File .\pack.ps1 -Configuration Release -Output artifacts -PackBundled
+      - name: NuGet smoke test (local artifacts)
+        run: dotnet build .\dotnet\tests\DeepSeek.OCR2.NuGetSmokeTest\DeepSeek.OCR2.NuGetSmokeTest.csproj -c Release
       - uses: actions/upload-artifact@v4
         with:
           name: nupkg

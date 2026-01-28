@@ -13,6 +13,7 @@ internal static class PythonVenvBootstrapper
     public static async Task<(string PythonExe, string PipExe)> EnsureVenvAsync(
         string systemPythonExe,
         string venvDir,
+        TimeSpan bootstrapDownloadTimeout,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(systemPythonExe))
@@ -34,7 +35,7 @@ internal static class PythonVenvBootstrapper
                 cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
-        await PythonPipBootstrapper.EnsurePipAsync(venvPython, venvDir, cancellationToken).ConfigureAwait(false);
+        await PythonPipBootstrapper.EnsurePipAsync(venvPython, venvDir, bootstrapDownloadTimeout, cancellationToken).ConfigureAwait(false);
 
         await RunAsync(
             fileName: venvPython,

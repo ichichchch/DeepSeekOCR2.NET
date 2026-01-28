@@ -9,7 +9,14 @@ if (args.Length < 1)
 var imagePath = args[0];
 var prompt = args.Length >= 2 ? args[1] : "<image>\nFree OCR.";
 
-var result = await DeepSeekOcr2.RecognizeFileAsync(imagePath, prompt);
+var result = await DeepSeekOcr2.RecognizeFileAsync(
+    imagePath,
+    prompt,
+    serverOptions: new DeepSeekOcr2LocalServerOptions
+    {
+        OcrRequestTimeout = TimeSpan.FromMinutes(30),
+        BootstrapDownloadTimeout = TimeSpan.FromMinutes(30),
+    });
 Console.WriteLine(result.Text);
 
 return 0;

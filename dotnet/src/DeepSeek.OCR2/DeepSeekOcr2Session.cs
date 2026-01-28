@@ -24,8 +24,10 @@ public sealed class DeepSeekOcr2Session : IAsyncDisposable, IDisposable
         DeepSeekOcr2LocalServerOptions? serverOptions = null,
         CancellationToken cancellationToken = default)
     {
+        serverOptions ??= new DeepSeekOcr2LocalServerOptions();
         var server = await DeepSeekOcr2LocalServer.StartAsync(serverOptions, cancellationToken).ConfigureAwait(false);
         var http = new HttpClient { BaseAddress = server.BaseUri };
+        http.Timeout = serverOptions.OcrRequestTimeout <= TimeSpan.Zero ? Timeout.InfiniteTimeSpan : serverOptions.OcrRequestTimeout;
         var client = new DeepSeekOcr2Client(http);
         return new DeepSeekOcr2Session(server, http, client);
     }
@@ -60,4 +62,3 @@ public sealed class DeepSeekOcr2Session : IAsyncDisposable, IDisposable
         }
     }
 }
-

@@ -5,6 +5,20 @@ namespace DeepSeek.OCR2;
 
 internal static class DeepSeekOcr2BundledAssets
 {
+    private static bool ContainsAnyFile(string directory, string pattern)
+    {
+        try
+        {
+            foreach (var _ in Directory.EnumerateFiles(directory, pattern, SearchOption.AllDirectories))
+                return true;
+        }
+        catch
+        {
+        }
+
+        return false;
+    }
+
     private static string? TryGetBundledRoot()
     {
         var baseDir = AppContext.BaseDirectory;
@@ -22,7 +36,16 @@ internal static class DeepSeekOcr2BundledAssets
             return null;
 
         var candidate = Path.Combine(root, "models", "DeepSeek-OCR-2");
-        return Directory.Exists(candidate) ? candidate : null;
+        if (!Directory.Exists(candidate))
+            return null;
+
+        if (ContainsAnyFile(candidate, "*.safetensors") || ContainsAnyFile(candidate, "*.bin"))
+            return candidate;
+
+        if (File.Exists(Path.Combine(candidate, "config.json")))
+            return candidate;
+
+        return null;
     }
 
     public static string? TryGetBundledWheelsDirectory()
@@ -33,7 +56,10 @@ internal static class DeepSeekOcr2BundledAssets
 
         var rid = "win-x64";
         var candidate = Path.Combine(root, "wheels", rid);
-        return Directory.Exists(candidate) ? candidate : null;
+        if (!Directory.Exists(candidate))
+            return null;
+
+        return ContainsAnyFile(candidate, "*.whl") ? candidate : null;
     }
 
     public static string? TryGetBundledPythonExecutable()

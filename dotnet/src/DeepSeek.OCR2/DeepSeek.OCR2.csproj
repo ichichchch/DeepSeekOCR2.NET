@@ -10,7 +10,7 @@
     <IncludeBundledAssets>false</IncludeBundledAssets>
 
     <PackageId>DeepSeek.OCR2.Core</PackageId>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <Title>DeepSeek OCR2 .NET Wrapper</Title>
     <Authors>ichi</Authors>
     <Company>ichi</Company>
@@ -31,6 +31,7 @@
     <RepositoryBranch Condition="'$(RepositoryBranch)' == '' and '$(GITHUB_REF_NAME)' != ''">$(GITHUB_REF_NAME)</RepositoryBranch>
     <RepositoryCommit Condition="'$(RepositoryCommit)' == '' and '$(GITHUB_SHA)' != ''">$(GITHUB_SHA)</RepositoryCommit>
     <PackageReleaseNotes>
+- Fix offline wheels auto-detection (avoid --no-index when only placeholder exists)
 - Add one-click API (DeepSeekOcr2/DeepSeekOcr2Session)
 - Add netstandard2.0 target framework
 - Add Windows auto Python+pIP bootstrap (portable python download)

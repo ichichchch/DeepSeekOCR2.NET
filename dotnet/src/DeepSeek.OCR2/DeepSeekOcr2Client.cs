@@ -39,22 +39,41 @@ public sealed class DeepSeekOcr2Client
         };
 
         using var content = new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json");
-        using var response = await _httpClient.PostAsync("ocr", content, cancellationToken).ConfigureAwait(false);
-        var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-        if (!response.IsSuccessStatusCode)
-            throw new HttpRequestException($"DeepSeek OCR2 server returned {(int)response.StatusCode} ({response.ReasonPhrase}). Body: {responseText}");
-
-        var dto = JsonSerializer.Deserialize<OcrResponseDto>(responseText, JsonOptions)
-                  ?? throw new InvalidOperationException("Failed to deserialize server response.");
-
-        return new DeepSeekOcr2Response
+        HttpResponseMessage response;
+        try
         {
-            Text = dto.Text ?? string.Empty,
-            ElapsedMilliseconds = dto.ElapsedMs,
-            OutputDirectory = dto.OutputDir,
-            OutputFiles = dto.Files ?? Array.Empty<string>(),
-        };
+            response = await _httpClient.PostAsync("ocr", content, cancellationToken).ConfigureAwait(false);
+        }
+        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException(
+                "DeepSeek OCR2 request timed out. If this is the first call, the Python backend may be downloading/loading the model. Increase HttpClient.Timeout (e.g. DeepSeekOcr2LocalServerOptions.OcrRequestTimeout) or pass a longer timeout via your own HttpClient.",
+                ex);
+        }
+
+        using (response)
+        {
+#if NET6_0_OR_GREATER
+            var responseText = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+#else
+            var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+#endif
+
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException($"DeepSeek OCR2 server returned {(int)response.StatusCode} ({response.ReasonPhrase}). Body: {responseText}");
+
+            var dto = JsonSerializer.Deserialize<OcrResponseDto>(responseText, JsonOptions)
+                      ?? throw new InvalidOperationException("Failed to deserialize server response.");
+
+            return new DeepSeekOcr2Response
+            {
+                Text = dto.Text ?? string.Empty,
+                ElapsedMilliseconds = dto.ElapsedMs,
+                OutputDirectory = dto.OutputDir,
+                OutputFiles = dto.Files ?? Array.Empty<string>(),
+            };
+        }
     }
 
     private sealed class OcrRequestDto
