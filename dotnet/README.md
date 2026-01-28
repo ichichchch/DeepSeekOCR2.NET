@@ -109,6 +109,7 @@ pwsh .\publish-nuget.ps1 -Version 0.3.0
 推荐引用方式（win-x64 / 分包资产，C1）：
 
 - 只引用一个包：`DeepSeek.OCR2`（meta 包，会自动拉起 `DeepSeek.OCR2.Core` + Python/wheels/模型资源包）
+- `DeepSeek.OCR2.Full.win-x64` 与 `DeepSeek.OCR2` 等价，已不再发布新版本
 - 如只要在线安装（不带离线资产）：引用 `DeepSeek.OCR2.Core`
 - 如要手动组合：直接引用 `DeepSeek.OCR2.Core` + `DeepSeek.OCR2.Assets.*`（按需选平台/模型包）
 

@@ -3,7 +3,6 @@ param(
   [string]$Output = "artifacts",
   [switch]$PrepareBundledAssets,
   [switch]$PackBundled,
-  [switch]$PackFull,
   [string]$PythonVersion = "3.10.11",
   [ValidateSet("cpu","cu118")]
   [string]$TorchPreset = "cpu",
@@ -30,10 +29,6 @@ dotnet pack .\src\DeepSeek.OCR2.Assets.Python.win-x64\DeepSeek.OCR2.Assets.Pytho
 dotnet pack .\src\DeepSeek.OCR2.Assets.Wheels.win-x64\DeepSeek.OCR2.Assets.Wheels.win-x64.csproj -c $Configuration -o .\$Output
 dotnet pack .\src\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2.csproj -c $Configuration -o .\$Output
 dotnet pack .\src\DeepSeek.OCR2.Meta\DeepSeek.OCR2.Meta.csproj -c $Configuration -o .\$Output
-
-if ($PackFull) {
-  dotnet pack .\src\DeepSeek.OCR2.Full.win-x64\DeepSeek.OCR2.Full.win-x64.csproj -c $Configuration -o .\$Output
-}
 
 }
 finally {

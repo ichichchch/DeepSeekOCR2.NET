@@ -10,7 +10,7 @@
     <NoWarn>$(NoWarn);NU5128</NoWarn>
 
     <PackageId>DeepSeek.OCR2.Assets.Wheels.win-x64</PackageId>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
     <Title>DeepSeek OCR2 Bundled Wheels (win-x64)</Title>
     <Description>Bundled offline wheels/torch for DeepSeek.OCR2 (win-x64). Copy-to-output via buildTransitive.</Description>
     <PackageTags>deepseek;ocr;python;torch;wheels;offline;win-x64</PackageTags>

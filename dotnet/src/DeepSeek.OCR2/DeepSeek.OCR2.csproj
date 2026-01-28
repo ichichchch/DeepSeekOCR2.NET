@@ -10,7 +10,7 @@
     <IncludeBundledAssets>false</IncludeBundledAssets>
 
     <PackageId>DeepSeek.OCR2.Core</PackageId>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
     <Title>DeepSeek OCR2 .NET Wrapper</Title>
     <Authors>ichi</Authors>
     <Company>ichi</Company>

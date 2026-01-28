@@ -38,8 +38,6 @@ var response = await DeepSeekOcr2.RecognizeFileAsync(
     serverOptions: new DeepSeekOcr2LocalServerOptions
     {
         Device = "cpu",
-        OcrRequestTimeout = TimeSpan.FromMinutes(30),
-        BootstrapDownloadTimeout = TimeSpan.FromMinutes(30),
     });
 
 Console.WriteLine(response.Text);

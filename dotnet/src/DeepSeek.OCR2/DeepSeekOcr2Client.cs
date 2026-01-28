@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -29,7 +30,7 @@ public sealed class DeepSeekOcr2Client
 
         var payload = new OcrRequestDto
         {
-            ImageBase64 = Convert.ToBase64String(request.ImageBytes),
+            ImageBytes = request.ImageBytes,
             Prompt = request.Prompt,
             OutputDir = request.OutputDirectory,
             BaseSize = request.BaseSize,
@@ -38,7 +39,9 @@ public sealed class DeepSeekOcr2Client
             SaveResults = request.SaveResults,
         };
 
-        using var content = new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json");
+        var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(payload, JsonOptions);
+        using var content = new ByteArrayContent(jsonBytes);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json") { CharSet = Encoding.UTF8.WebName };
 
         HttpResponseMessage response;
         try
@@ -54,17 +57,25 @@ public sealed class DeepSeekOcr2Client
 
         using (response)
         {
-#if NET6_0_OR_GREATER
-            var responseText = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-#else
-            var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-#endif
-
             if (!response.IsSuccessStatusCode)
+            {
+#if NET6_0_OR_GREATER
+                var responseText = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+#else
+                var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+#endif
                 throw new HttpRequestException($"DeepSeek OCR2 server returned {(int)response.StatusCode} ({response.ReasonPhrase}). Body: {responseText}");
+            }
 
-            var dto = JsonSerializer.Deserialize<OcrResponseDto>(responseText, JsonOptions)
+#if NET6_0_OR_GREATER
+            await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            var dto = await JsonSerializer.DeserializeAsync<OcrResponseDto>(responseStream, JsonOptions, cancellationToken).ConfigureAwait(false)
                       ?? throw new InvalidOperationException("Failed to deserialize server response.");
+#else
+            using var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            var dto = JsonSerializer.Deserialize<OcrResponseDto>(responseStream, JsonOptions)
+                      ?? throw new InvalidOperationException("Failed to deserialize server response.");
+#endif
 
             return new DeepSeekOcr2Response
             {
@@ -79,7 +90,7 @@ public sealed class DeepSeekOcr2Client
     private sealed class OcrRequestDto
     {
         [JsonPropertyName("image_base64")]
-        public string ImageBase64 { get; init; } = string.Empty;
+        public byte[] ImageBytes { get; init; } = Array.Empty<byte>();
         [JsonPropertyName("prompt")]
         public string Prompt { get; init; } = string.Empty;
         [JsonPropertyName("output_dir")]
