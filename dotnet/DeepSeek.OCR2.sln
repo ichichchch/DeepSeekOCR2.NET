@@ -1,0 +1,75 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2", "src\DeepSeek.OCR2\DeepSeek.OCR2.csproj", "{A0E6B87C-9F2B-4A92-9F22-8DB4B1C0F3C1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2.Meta", "src\DeepSeek.OCR2.Meta\DeepSeek.OCR2.Meta.csproj", "{96D0D9A8-6840-4B1A-9E0C-20E7A7E1B2E6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2.Bundled", "src\DeepSeek.OCR2.Bundled\DeepSeek.OCR2.Bundled.csproj", "{C3A84A52-B7D9-4C04-A60A-39E14B6E24B7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2.Assets.Python.win-x64", "src\DeepSeek.OCR2.Assets.Python.win-x64\DeepSeek.OCR2.Assets.Python.win-x64.csproj", "{2C7B2F9B-5D8D-4A0A-9D74-6D8E0D2F9C55}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2.Assets.Wheels.win-x64", "src\DeepSeek.OCR2.Assets.Wheels.win-x64\DeepSeek.OCR2.Assets.Wheels.win-x64.csproj", "{D2D5E943-27D7-4C2A-8B08-6D5E1B2E88A0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2.Assets.Model", "src\DeepSeek.OCR2.Assets.Model\DeepSeek.OCR2.Assets.Model.csproj", "{A0C9C3E9-0C7D-4E2A-9F3D-2B98E8A0A2D7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2.Full.win-x64", "src\DeepSeek.OCR2.Full.win-x64\DeepSeek.OCR2.Full.win-x64.csproj", "{E49A4F3A-9F8A-4D6F-9C2D-1D5A0B4C3E2F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2.SampleConsole", "samples\DeepSeek.OCR2.SampleConsole\DeepSeek.OCR2.SampleConsole.csproj", "{1E0C7F5B-6B1B-4D2D-8C6E-BA4CC0A8F9F1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2.NuGetSmokeTest", "tests\DeepSeek.OCR2.NuGetSmokeTest\DeepSeek.OCR2.NuGetSmokeTest.csproj", "{7E4F9E57-9EAA-4A4E-9B37-2E18A15D59C0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepSeek.OCR2.ClientContractTest", "tests\DeepSeek.OCR2.ClientContractTest\DeepSeek.OCR2.ClientContractTest.csproj", "{8C0A9B2A-4C44-4A5A-8D1E-4A3C2E1F0B9A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A0E6B87C-9F2B-4A92-9F22-8DB4B1C0F3C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0E6B87C-9F2B-4A92-9F22-8DB4B1C0F3C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0E6B87C-9F2B-4A92-9F22-8DB4B1C0F3C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0E6B87C-9F2B-4A92-9F22-8DB4B1C0F3C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96D0D9A8-6840-4B1A-9E0C-20E7A7E1B2E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96D0D9A8-6840-4B1A-9E0C-20E7A7E1B2E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96D0D9A8-6840-4B1A-9E0C-20E7A7E1B2E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96D0D9A8-6840-4B1A-9E0C-20E7A7E1B2E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3A84A52-B7D9-4C04-A60A-39E14B6E24B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3A84A52-B7D9-4C04-A60A-39E14B6E24B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3A84A52-B7D9-4C04-A60A-39E14B6E24B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3A84A52-B7D9-4C04-A60A-39E14B6E24B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C7B2F9B-5D8D-4A0A-9D74-6D8E0D2F9C55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C7B2F9B-5D8D-4A0A-9D74-6D8E0D2F9C55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C7B2F9B-5D8D-4A0A-9D74-6D8E0D2F9C55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C7B2F9B-5D8D-4A0A-9D74-6D8E0D2F9C55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2D5E943-27D7-4C2A-8B08-6D5E1B2E88A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2D5E943-27D7-4C2A-8B08-6D5E1B2E88A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2D5E943-27D7-4C2A-8B08-6D5E1B2E88A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2D5E943-27D7-4C2A-8B08-6D5E1B2E88A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0C9C3E9-0C7D-4E2A-9F3D-2B98E8A0A2D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0C9C3E9-0C7D-4E2A-9F3D-2B98E8A0A2D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0C9C3E9-0C7D-4E2A-9F3D-2B98E8A0A2D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0C9C3E9-0C7D-4E2A-9F3D-2B98E8A0A2D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E49A4F3A-9F8A-4D6F-9C2D-1D5A0B4C3E2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E49A4F3A-9F8A-4D6F-9C2D-1D5A0B4C3E2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E49A4F3A-9F8A-4D6F-9C2D-1D5A0B4C3E2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E49A4F3A-9F8A-4D6F-9C2D-1D5A0B4C3E2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E0C7F5B-6B1B-4D2D-8C6E-BA4CC0A8F9F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E0C7F5B-6B1B-4D2D-8C6E-BA4CC0A8F9F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E0C7F5B-6B1B-4D2D-8C6E-BA4CC0A8F9F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E0C7F5B-6B1B-4D2D-8C6E-BA4CC0A8F9F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E4F9E57-9EAA-4A4E-9B37-2E18A15D59C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E4F9E57-9EAA-4A4E-9B37-2E18A15D59C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E4F9E57-9EAA-4A4E-9B37-2E18A15D59C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E4F9E57-9EAA-4A4E-9B37-2E18A15D59C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C0A9B2A-4C44-4A5A-8D1E-4A3C2E1F0B9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C0A9B2A-4C44-4A5A-8D1E-4A3C2E1F0B9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C0A9B2A-4C44-4A5A-8D1E-4A3C2E1F0B9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C0A9B2A-4C44-4A5A-8D1E-4A3C2E1F0B9A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

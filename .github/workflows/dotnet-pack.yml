@@ -16,7 +16,11 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-dotnet@v4
         with:
+          dotnet-version: "8.0.x"
+      - uses: actions/setup-dotnet@v4
+        with:
           dotnet-version: "10.0.x"
+          dotnet-quality: "preview"
       - name: Prepare local artifacts source
         shell: pwsh
         run: New-Item -ItemType Directory -Force -Path .\dotnet\artifacts | Out-Null
