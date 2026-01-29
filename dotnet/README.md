@@ -1,19 +1,25 @@
-## DeepSeek.OCR2 (.NET / NuGet) 使用说明
+# DeepSeek.OCR2 (.NET / NuGet)
 
-DeepSeek.OCR2 提供一个“本地 Python 推理服务 + .NET 客户端”的封装：
+DeepSeek.OCR2 提供一个“本地 Python 推理服务 + .NET 客户端”的封装：在本机启动 Python HTTP 服务完成推理，由 .NET 端通过 HTTP 调用执行 OCR。
 
 - `DeepSeekOcr2LocalServer`：从包内释放 Python HTTP Server 脚本，按需准备 Python/venv/依赖，然后启动子进程（模型进程可复用）。
 - `DeepSeekOcr2Client`：通过 HTTP 调用 `POST /ocr` 执行 OCR 推理。
 - `DeepSeekOcr2` / `DeepSeekOcr2Session`：一键启动/复用服务的便捷入口。
 
-### 包结构（你应该引用哪个）
+## 安装（先选包）
 
-推荐只记住两种用法：
+推荐只记住两种用法（绝大多数用户足够用）：
 
 - 在线/自动安装（包体小）：引用 `DeepSeek.OCR2.Core`
 - 离线/可选资产（更省心）：引用 `DeepSeek.OCR2`（meta 包，会自动拉取资产包）
 
-仓库中实际会发布这些包：
+```powershell
+dotnet add package DeepSeek.OCR2.Core
+# or
+dotnet add package DeepSeek.OCR2
+```
+
+仓库中实际会发布这些包（了解即可）：
 
 - `DeepSeek.OCR2.Core`：.NET 客户端 + 本地 Python 服务引导（默认不含模型权重）
 - `DeepSeek.OCR2`：meta 包 = Core + `DeepSeek.OCR2.Assets.*`（离线 Python / wheels / 模型）
@@ -23,13 +29,13 @@ DeepSeek.OCR2 提供一个“本地 Python 推理服务 + .NET 客户端”的�
 - `DeepSeek.OCR2.Bundled`：单包内包含 python+wheels+模型的离线分发方案（包体可能非常大，通常建议私有源）
 - `DeepSeek.OCR2.Full.win-x64`：历史等价包，已停止发布新版本
 
-### 先决条件
+## 先决条件
 
 - Windows：默认无需预装 Python。`AutoSetupPython=true` 时会在首次运行自动下载便携 Python 并引导 pip/venv。
 - Linux/macOS：建议预装 Python 3.10+，并用 `PythonExecutablePath` 指定；或自行关闭 `AutoSetupPython/EnsureVenv` 并管理环境。
 - 依赖安装：默认会创建 venv 并安装 torch + runtime requirements；也支持离线 wheels（见下文）。
 
-### 快速开始
+## 快速开始
 
 最简单：识别一张图片文件（内部自动启动本地服务）：
 
@@ -52,7 +58,25 @@ var result = await session.Client.RecognizeAsync(request);
 Console.WriteLine(result.Text);
 ```
 
-### 常用配置（DeepSeekOcr2LocalServerOptions）
+## 常用配置（DeepSeekOcr2LocalServerOptions）
+
+你可以在创建 session 时传入 options：
+
+```csharp
+using System;
+using DeepSeek.OCR2;
+
+var options = new DeepSeekOcr2LocalServerOptions
+{
+  Device = "cpu",
+  DType = "float32",
+  TorchInstallPreset = DeepSeekOcr2TorchInstallPreset.Cpu,
+  OcrRequestTimeout = TimeSpan.FromMinutes(30),
+};
+
+await using var session = await DeepSeekOcr2.CreateSessionAsync(options);
+var result = await session.Client.RecognizeAsync(DeepSeekOcr2Request.FromFile(@"D:\test.jpg"));
+```
 
 超时与首启动：
 
@@ -68,7 +92,7 @@ Python/venv：
 
 Torch 安装与离线 wheels：
 
-- `TorchInstallPreset`：`Cpu`（默认）/ `Cuda118` / `None`
+- `TorchInstallPreset`：`Cpu`（默认）/ `Cuda118` / `None`（`DeepSeekOcr2TorchInstallPreset`）
 - `OfflineWheelDirectory`：离线 wheel 目录（会传给 pip：`--find-links <dir>`）
 - `PreferOfflineWheels`：为 true 时额外加 `--no-index`（强制只从离线目录找）
 - `TorchVersion/TorchVisionVersion/TorchAudioVersion`：按需锁定版本
@@ -87,13 +111,13 @@ Torch 安装与离线 wheels：
 - `DType="float16"` / `DType="bfloat16"`：降低显存占用、可能更快
 - `AttnImpl="flash_attention_2"`：如环境支持可更快；不支持时服务端会自动降级
 
-### 配置模板（contentFiles）
+## 配置模板（contentFiles）
 
 Core 包会把默认配置模板拷贝到引用方输出目录：
 
 - `DeepSeek.OCR2/templates/deepseek-ocr2.defaults.json`
 
-### 离线/资产包的运行时行为
+## 离线/资产包的运行时行为
 
 只要你的输出目录下存在这些路径（由 `DeepSeek.OCR2` meta 包或 `DeepSeek.OCR2.Bundled` 自动拷贝），运行时会自动优先使用离线资源：
 
@@ -119,7 +143,7 @@ pwsh .\dotnet\bundle\prepare-bundled-assets.ps1 -TorchPreset cpu -ModelId deepse
 pwsh .\dotnet\pack.ps1 -PackBundled
 ```
 
-### 故障排查
+## 故障排查
 
 首次调用很慢/超时：
 
@@ -138,9 +162,9 @@ Visual Studio 调试时弹窗 “DotNetDebugServicesOutOfMemory”：
 Torch not compiled with CUDA enabled：
 
 - 你把 `Device` 设成了 `cuda`，但当前 Python 环境里的 torch 是 CPU-only 版本。
-- 解决：把 `Device` 改为 `cpu`；或设置 `TorchInstallPreset=Cuda118` 让 venv 安装 CUDA 版 torch；或 `TorchInstallPreset=None` 并自行维护 CUDA torch。
+- 解决：把 `Device` 改为 `cpu`；或设置 `TorchInstallPreset=DeepSeekOcr2TorchInstallPreset.Cuda118` 让 venv 安装 CUDA 版 torch；或 `TorchInstallPreset=DeepSeekOcr2TorchInstallPreset.None` 并自行维护 CUDA torch。
 
-### HTTP 协议
+## HTTP 协议
 
 - `GET /health`：健康检查（返回 `{ "ok": true }`）
 - `POST /ocr`：JSON 请求体（关键字段）
@@ -149,7 +173,7 @@ Torch not compiled with CUDA enabled：
   - `output_dir`：可选，输出目录
   - `base_size` / `image_size` / `crop_mode` / `save_results`：与官方 `model.infer` 参数一致
 
-### 本地打包 / 发布到 nuget.org
+## 仓库维护者：本地打包 / 发布到 nuget.org
 
 打包（输出到 `dotnet/artifacts/`）：
 
@@ -184,7 +208,7 @@ GitHub Actions 自动发布：
 - 在仓库 Secrets 配置 `NUGET_API_KEY`
 - 推送 tag `v*` 会触发发布工作流
 
-### 许可证与归属
+## 许可证与归属
 
 - 上游仓库 DeepSeek-OCR-2 的许可证为 Apache License 2.0（见仓库根目录 LICENSE.txt）。
 - 本封装仓库地址：https://github.com/ichichchch/DeepSeekOCR2.NET

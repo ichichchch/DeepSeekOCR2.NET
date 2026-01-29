@@ -2,37 +2,15 @@
 
 # DeepSeekOCR2.NET
 
-DeepSeekOCR2.NET 是对 **DeepSeek-OCR-2** 的 .NET 封装：通过启动一个本地 Python HTTP 推理服务，并由 .NET 客户端以 HTTP 调用完成 OCR 识别。
+DeepSeekOCR2.NET 是对 **DeepSeek-OCR-2** 的 .NET 封装：在本机启动一个 Python HTTP 推理服务，由 .NET 客户端通过 HTTP 调用完成 OCR 识别。
 
 - 上游模型（Hugging Face）：https://huggingface.co/deepseek-ai/DeepSeek-OCR-2
 - 上游论文（PDF）：https://github.com/deepseek-ai/DeepSeek-OCR-2/blob/main/DeepSeek_OCR2_paper.pdf
-
-## 仓库目录结构
-
-```text
-DeepSeekOCR2.NET/
-├─ dotnet/                          .NET 封装与打包工程
-│  ├─ src/                          各 NuGet 包的项目
-│  │  ├─ DeepSeek.OCR2/             PackageId=DeepSeek.OCR2.Core（客户端 + 本地服务引导）
-│  │  ├─ DeepSeek.OCR2.Meta/        PackageId=DeepSeek.OCR2（meta 包：拉取 Core + 资产包）
-│  │  ├─ DeepSeek.OCR2.Assets.*     离线资产包（Python / wheels / 模型快照）
-│  │  ├─ DeepSeek.OCR2.Bundled/     单包离线分发（含全部资产，包体很大）
-│  │  └─ DeepSeek.OCR2.Full.win-x64/ 历史等价包（已停更）
-│  ├─ samples/                      示例项目
-│  ├─ tests/                        测试（契约/Smoke）
-│  ├─ bundle/                       生成 bundled 资产的脚本
-│  ├─ pack.ps1                      本地打包脚本
-│  ├─ publish-nuget.ps1             打包并发布到 nuget.org
-│  └─ push.ps1                      仅推送 nupkg
-├─ DeepSeek-OCR2-master/            上游代码快照（便于对照/实验）
-│  └─ requirements.txt              上游脚本依赖（仅用于该目录内的 Python 代码）
-├─ assets/                          README 图片/徽章
-└─ README.md                        本文件
-```
+- .NET 详细使用说明（NuGet Readme）：[dotnet/README.md](dotnet/README.md)
 
 ## 快速开始（.NET）
 
-安装 NuGet（建议从下方“包结构”里按需选择）后：
+安装 NuGet（建议先看下方“包结构”选择包）后：
 
 ```csharp
 using DeepSeek.OCR2;
@@ -57,16 +35,14 @@ var result = await session.Client.RecognizeAsync(request);
 Console.WriteLine(result.Text);
 ```
 
-更完整的 .NET 使用说明、配置项与故障排查请看：[dotnet/README.md](dotnet/README.md)。
-
 ## 包结构（你应该引用哪个）
 
-推荐只记住两种用法：
+推荐只记住两种用法（绝大多数用户足够用）：
 
 - 在线/自动安装（包体小）：引用 `DeepSeek.OCR2.Core`
 - 离线/可选资产（更省心）：引用 `DeepSeek.OCR2`（meta 包，会自动拉取资产包）
 
-仓库中会发布这些包：
+仓库中会发布这些包（了解即可）：
 
 - `DeepSeek.OCR2.Core`：.NET 客户端 + 本地 Python 服务引导（默认不含模型权重）
 - `DeepSeek.OCR2`：meta 包 = Core + `DeepSeek.OCR2.Assets.*`（离线 Python / wheels / 模型）
@@ -78,12 +54,16 @@ Console.WriteLine(result.Text);
 
 ## 离线与 Bundled 资产（重要）
 
-本仓库的 `dotnet/src/DeepSeek.OCR2/Bundled/*` 为 **生成型资产目录**（便携 Python / wheels / 模型快照），默认不提交到 Git。
+离线有两条路线：
+
+- **推荐（更灵活）**：引用 `DeepSeek.OCR2`（meta 包），让 NuGet 用依赖的方式把 Python / wheels / 模型作为“资产包”下发。
+- **单包（更省心但极大）**：使用 `DeepSeek.OCR2.Bundled`，把全部离线资产打进一个 nupkg（通常只建议私有源）。
+
+本仓库的 `dotnet/src/DeepSeek.OCR2/Bundled/*` 为 **生成型资产目录**（便携 Python / wheels / 模型快照），默认不提交到 Git：
 
 - GitHub LFS 对单文件有 2GB 上限；DeepSeek-OCR-2 的 safetensors 权重文件可能大于 2GB，直接推送会失败。
-- 建议做法：
-  - 生产/发布场景：通过 CI 或本地脚本生成 Bundled 资产，然后打包成 NuGet（例如 `DeepSeek.OCR2.Bundled`），并发布到私有源；
-  - 开发/调试场景：仅在本地生成，或使用 `DeepSeek.OCR2` + Assets 包组合。
+- 生产/发布：通过 CI 或本地脚本生成 Bundled 资产，再打包发布到私有源。
+- 开发/调试：只在本地生成即可，或直接用 `DeepSeek.OCR2` + Assets 包组合。
 
 准备 Bundled 资产（会下载大量内容）：
 
@@ -112,6 +92,28 @@ pwsh .\dotnet\pack.ps1 -PackBundled -FastPack
 
 ```powershell
 pwsh .\dotnet\pack.ps1 -SkipAssets
+```
+
+## 仓库目录结构
+
+```text
+DeepSeekOCR2.NET/
+├─ dotnet/                          .NET 封装与打包工程
+│  ├─ src/                          各 NuGet 包的项目
+│  │  ├─ DeepSeek.OCR2/             PackageId=DeepSeek.OCR2.Core（客户端 + 本地服务引导）
+│  │  ├─ DeepSeek.OCR2.Meta/        PackageId=DeepSeek.OCR2（meta 包：拉取 Core + 资产包）
+│  │  ├─ DeepSeek.OCR2.Assets.*     离线资产包（Python / wheels / 模型快照）
+│  │  ├─ DeepSeek.OCR2.Bundled/     单包离线分发（含全部资产，包体很大）
+│  │  └─ DeepSeek.OCR2.Full.win-x64/ 历史等价包（已停更）
+│  ├─ samples/                      示例项目
+│  ├─ tests/                        测试（契约/Smoke）
+│  ├─ bundle/                       生成 bundled 资产的脚本
+│  ├─ pack.ps1                      本地打包脚本
+│  ├─ publish-nuget.ps1             打包并发布到 nuget.org
+│  └─ push.ps1                      仅推送 nupkg
+├─ DeepSeek-OCR2-master/            上游代码快照（便于对照/实验）
+├─ assets/                          README 图片/徽章
+└─ README.md                        本文件
 ```
 
 ## 许可证与致谢
