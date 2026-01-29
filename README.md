@@ -1,152 +1,79 @@
 <!-- markdownlint-disable first-line-h1 -->
-<!-- markdownlint-disable html -->
-<!-- markdownlint-disable no-duplicate-header -->
 
+# DeepSeekOCR2.NET
 
-<div align="center">
-  <img src="assets/logo.svg" width="60%" alt="DeepSeek AI" />
-</div>
+DeepSeekOCR2.NET 是对 **DeepSeek-OCR-2** 的 .NET 封装：通过启动一个本地 Python HTTP 推理服务，并由 .NET 客户端以 HTTP 调用完成 OCR 识别。
 
+- 上游模型（Hugging Face）：https://huggingface.co/deepseek-ai/DeepSeek-OCR-2
+- 上游论文（PDF）：https://github.com/deepseek-ai/DeepSeek-OCR-2/blob/main/DeepSeek_OCR2_paper.pdf
 
-<hr>
-<div align="center">
-  <a href="https://www.deepseek.com/" target="_blank">
-    <img alt="Homepage" src="assets/badge.svg" />
-  </a>
-  <a href="https://huggingface.co/deepseek-ai/DeepSeek-OCR-2" target="_blank">
-    <img alt="Hugging Face" src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-DeepSeek%20AI-ffc107?color=ffc107&logoColor=white" />
-  </a>
+## 快速开始（.NET）
 
-</div>
+安装 NuGet（建议从下方“包结构”里按需选择）后：
 
-<div align="center">
+```csharp
+using DeepSeek.OCR2;
 
-  <a href="https://discord.gg/Tc7c45Zzu5" target="_blank">
-    <img alt="Discord" src="https://img.shields.io/badge/Discord-DeepSeek%20AI-7289da?logo=discord&logoColor=white&color=7289da" />
-  </a>
-  <a href="https://twitter.com/deepseek_ai" target="_blank">
-    <img alt="Twitter Follow" src="https://img.shields.io/badge/Twitter-deepseek_ai-white?logo=x&logoColor=white" />
-  </a>
-
-</div>
-
-
-
-<p align="center">
-  <a href="https://huggingface.co/deepseek-ai/DeepSeek-OCR-2"><b>📥 Model Download</b></a> |
-  <a href="https://github.com/deepseek-ai/DeepSeek-OCR-2/blob/main/DeepSeek_OCR2_paper.pdf"><b>📄 Paper Link</b></a> |
-  <a href=""><b>📄 Arxiv Paper Link</b></a> |
-</p>
-
-<h2>
-<p align="center">
-  <a href="">DeepSeek-OCR 2: Visual Causal Flow</a>
-</p>
-</h2>
-
-<p align="center">
-<img src="assets/fig1.png" style="width: 600px" align=center>
-</p>
-<p align="center">
-<a href="">Explore more human-like visual encoding.</a>       
-</p>
-
-
-## Contents
-- [Install](#install)
-- [vLLM Inference](#vllm-inference)
-- [Transformers Inference](#transformers-inference)
-  
-
-
-
-
-## Install
->Our environment is cuda11.8+torch2.6.0.
-1. Clone this repository and navigate to the DeepSeek-OCR-2 folder
-```bash
-git clone https://github.com/deepseek-ai/DeepSeek-OCR-2.git
-```
-2. Conda
-```Shell
-conda create -n deepseek-ocr2 python=3.12.9 -y
-conda activate deepseek-ocr2
-```
-3. Packages
-
-- download the vllm-0.8.5 [whl](https://github.com/vllm-project/vllm/releases/tag/v0.8.5) 
-```Shell
-pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu118
-pip install vllm-0.8.5+cu118-cp38-abi3-manylinux1_x86_64.whl
-pip install -r requirements.txt
-pip install flash-attn==2.7.3 --no-build-isolation
-```
-**Note:** if you want vLLM and transformers codes to run in the same environment, you don't need to worry about this installation error like: vllm 0.8.5+cu118 requires transformers>=4.51.1
-
-## vLLM-Inference
-- VLLM:
->**Note:** change the INPUT_PATH/OUTPUT_PATH and other settings in the DeepSeek-OCR2-master/DeepSeek-OCR2-vllm/config.py
-```Shell
-cd DeepSeek-OCR2-master/DeepSeek-OCR2-vllm
-```
-1. image: streaming output
-```Shell
-python run_dpsk_ocr2_image.py
-```
-2. pdf: concurrency (on-par speed with DeepSeek-OCR)
-```Shell
-python run_dpsk_ocr2_pdf.py
-```
-3. batch eval for benchmarks (i.e., OmniDocBench v1.5)
-```Shell
-python run_dpsk_ocr2_eval_batch.py
+var result = await DeepSeekOcr2.RecognizeFileAsync(@"D:\test.jpg");
+Console.WriteLine(result.Text);
 ```
 
-## Transformers-Inference
-- Transformers
-```python
-from transformers import AutoModel, AutoTokenizer
-import torch
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
-model_name = 'deepseek-ai/DeepSeek-OCR-2'
+复用同一个模型进程（多次调用更快）：
 
-tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-model = AutoModel.from_pretrained(model_name, _attn_implementation='flash_attention_2', trust_remote_code=True, use_safetensors=True)
-model = model.eval().cuda().to(torch.bfloat16)
+```csharp
+using DeepSeek.OCR2;
 
-# prompt = "<image>\nFree OCR. "
-prompt = "<image>\n<|grounding|>Convert the document to markdown. "
-image_file = 'your_image.jpg'
-output_path = 'your/output/dir'
+await using var session = await DeepSeekOcr2.CreateSessionAsync();
 
-res = model.infer(tokenizer, prompt=prompt, image_file=image_file, output_path = output_path, base_size = 1024, image_size = 768, crop_mode=True, save_results = True)
-```
-or you can
-```Shell
-cd DeepSeek-OCR2-master/DeepSeek-OCR2-hf
-python run_dpsk_ocr2.py
-```
-## Support-Modes
-- Dynamic resolution
-  - Default: (0-6)×768×768 + 1×1024×1024 — (0-6)×144 + 256 visual tokens ✅
+var request = DeepSeekOcr2Request.FromFile(@"D:\test.jpg") with
+{
+  Prompt = "<image>\nFree OCR."
+};
 
-## Main Prompts
-```python
-# document: <image>\n<|grounding|>Convert the document to markdown.
-# without layouts: <image>\nFree OCR.
+var result = await session.Client.RecognizeAsync(request);
+Console.WriteLine(result.Text);
 ```
 
+更完整的 .NET 使用说明、配置项与故障排查请看：[dotnet/README.md](dotnet/README.md)。
 
+## 包结构（你应该引用哪个）
 
+推荐只记住两种用法：
 
-## Acknowledgement
+- 在线/自动安装（包体小）：引用 `DeepSeek.OCR2.Core`
+- 离线/可选资产（更省心）：引用 `DeepSeek.OCR2`（meta 包，会自动拉取资产包）
 
-We would like to thank [DeepSeek-OCR](https://github.com/deepseek-ai/DeepSeek-OCR/), [Vary](https://github.com/Ucas-HaoranWei/Vary/), [GOT-OCR2.0](https://github.com/Ucas-HaoranWei/GOT-OCR2.0/), [MinerU](https://github.com/opendatalab/MinerU), [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) for their valuable models.
+仓库中会发布这些包：
 
-We also appreciate the benchmark [OmniDocBench](https://github.com/opendatalab/OmniDocBench).
+- `DeepSeek.OCR2.Core`：.NET 客户端 + 本地 Python 服务引导（默认不含模型权重）
+- `DeepSeek.OCR2`：meta 包 = Core + `DeepSeek.OCR2.Assets.*`（离线 Python / wheels / 模型）
+- `DeepSeek.OCR2.Assets.Python.win-x64`：Windows 便携 Python（可选）
+- `DeepSeek.OCR2.Assets.Wheels.win-x64`：离线 wheels/torch（可选）
+- `DeepSeek.OCR2.Assets.Model.DeepSeekOCR2`：模型快照（可选）
+- `DeepSeek.OCR2.Bundled`：单包内包含 python+wheels+模型的离线分发方案（包体非常大，通常建议私有源）
 
-## Citation
+## 离线与 Bundled 资产（重要）
 
-```bibtex
-coming soon~
+本仓库的 `dotnet/src/DeepSeek.OCR2/Bundled/*` 为 **生成型资产目录**（便携 Python / wheels / 模型快照），默认不提交到 Git。
+
+- GitHub LFS 对单文件有 2GB 上限；DeepSeek-OCR-2 的 safetensors 权重文件可能大于 2GB，直接推送会失败。
+- 建议做法：
+  - 生产/发布场景：通过 CI 或本地脚本生成 Bundled 资产，然后打包成 NuGet（例如 `DeepSeek.OCR2.Bundled`），并发布到私有源；
+  - 开发/调试场景：仅在本地生成，或使用 `DeepSeek.OCR2` + Assets 包组合。
+
+准备 Bundled 资产（会下载大量内容）：
+
+```powershell
+pwsh .\dotnet\bundle\prepare-bundled-assets.ps1 -TorchPreset cpu -ModelId deepseek-ai/DeepSeek-OCR-2
+```
+
+随后打包：
+
+```powershell
+pwsh .\dotnet\pack.ps1 -PackBundled
+```
+
+## 许可证与致谢
+
+- 本仓库为 .NET 封装与打包工程；模型与论文归上游项目所有。
+- 致谢与引用请参考上游 DeepSeek-OCR-2 仓库与论文。
