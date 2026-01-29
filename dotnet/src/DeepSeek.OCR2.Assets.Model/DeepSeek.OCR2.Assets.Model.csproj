@@ -9,7 +9,7 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <NoWarn>$(NoWarn);NU5128</NoWarn>
 
-    <PackageId>DeepSeek.OCR2.Assets.Model.DeepSeekOCR2</PackageId>
+    <PackageId>DeepSeek.OCR2.Assets.Model</PackageId>
     <Version>0.3.4</Version>
     <Title>DeepSeek OCR2 Model Snapshot</Title>
     <Description>Bundled DeepSeek-OCR-2 model snapshot for DeepSeek.OCR2. Copy-to-output via buildTransitive.</Description>
@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="buildTransitive\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2.targets"
+    <None Include="buildTransitive\DeepSeek.OCR2.Assets.Model.targets"
           Pack="true"
           PackagePath="buildTransitive\" />
   </ItemGroup>

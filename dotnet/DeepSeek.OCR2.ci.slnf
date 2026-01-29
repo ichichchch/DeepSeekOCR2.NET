@@ -7,7 +7,7 @@
       "src\\DeepSeek.OCR2.Bundled\\DeepSeek.OCR2.Bundled.csproj",
       "src\\DeepSeek.OCR2.Assets.Python.win-x64\\DeepSeek.OCR2.Assets.Python.win-x64.csproj",
       "src\\DeepSeek.OCR2.Assets.Wheels.win-x64\\DeepSeek.OCR2.Assets.Wheels.win-x64.csproj",
-      "src\\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2\\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2.csproj",
+      "src\\DeepSeek.OCR2.Assets.Model\\DeepSeek.OCR2.Assets.Model.csproj",
       "samples\\DeepSeek.OCR2.SampleConsole\\DeepSeek.OCR2.SampleConsole.csproj"
     ]
   }

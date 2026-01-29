@@ -50,7 +50,7 @@ if (-not $skipAssetsWheels) {
 }
 
 if (-not $skipAssetsModel) {
-  dotnet pack .\src\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2.csproj @packCommonArgs @packFastArgs
+  dotnet pack .\src\DeepSeek.OCR2.Assets.Model\DeepSeek.OCR2.Assets.Model.csproj @packCommonArgs @packFastArgs
 }
 
 if (-not $SkipMeta) {

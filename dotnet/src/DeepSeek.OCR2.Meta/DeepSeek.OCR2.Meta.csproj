@@ -31,7 +31,7 @@
     <ProjectReference Include="..\DeepSeek.OCR2\DeepSeek.OCR2.csproj" />
     <ProjectReference Include="..\DeepSeek.OCR2.Assets.Python.win-x64\DeepSeek.OCR2.Assets.Python.win-x64.csproj" />
     <ProjectReference Include="..\DeepSeek.OCR2.Assets.Wheels.win-x64\DeepSeek.OCR2.Assets.Wheels.win-x64.csproj" />
-    <ProjectReference Include="..\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2.csproj" />
+    <ProjectReference Include="..\DeepSeek.OCR2.Assets.Model\DeepSeek.OCR2.Assets.Model.csproj" />
   </ItemGroup>
 
   <ItemGroup>

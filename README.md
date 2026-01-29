@@ -49,7 +49,7 @@ Console.WriteLine(result.Text);
 - `DeepSeek.OCR2`：meta 包 = Core + `DeepSeek.OCR2.Assets.*`（离线 Python / wheels / 模型）
 - `DeepSeek.OCR2.Assets.Python.win-x64`：Windows 便携 Python（可选）
 - `DeepSeek.OCR2.Assets.Wheels.win-x64`：离线 wheels/torch（可选）
-- `DeepSeek.OCR2.Assets.Model.DeepSeekOCR2`：模型快照（可选）
+- `DeepSeek.OCR2.Assets.Model`：模型快照（可选）
 - `DeepSeek.OCR2.Bundled`：单包内包含 python+wheels+模型的离线分发方案（包体非常大，通常建议私有源）
 
 ## 离线与 Bundled 资产（重要）
@@ -75,7 +75,7 @@ pwsh .\dotnet\pack.ps1 -PackBundled
 
 为什么会很慢：
 
-- `DeepSeek.OCR2.Assets.Model.DeepSeekOCR2` 会把整个模型快照（含 safetensors 权重）打进 nupkg，文件很大，打包时需要大量磁盘读写与压缩。
+- `DeepSeek.OCR2.Assets.Model` 会把整个模型快照（含 safetensors 权重）打进 nupkg，文件很大，打包时需要大量磁盘读写与压缩。
 - `DeepSeek.OCR2.Assets.Python.win-x64` / `DeepSeek.OCR2.Assets.Wheels.win-x64` 会包含成千上万个文件/whl，NuGet 打包需要枚举、哈希并写入 zip，也会显著耗时（并可能出现 Windows 路径过长警告）。
 
 本地开发如果只想快速产物验证（不追求最小包体），可以用快速打包模式：

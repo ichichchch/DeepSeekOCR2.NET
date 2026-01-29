@@ -19,7 +19,7 @@ DeepSeek.OCR2 提供一个“本地 Python 推理服务 + .NET 客户端”的�
 - `DeepSeek.OCR2`：meta 包 = Core + `DeepSeek.OCR2.Assets.*`（离线 Python / wheels / 模型）
 - `DeepSeek.OCR2.Assets.Python.win-x64`：Windows 便携 Python（可选）
 - `DeepSeek.OCR2.Assets.Wheels.win-x64`：离线 wheels/torch（可选）
-- `DeepSeek.OCR2.Assets.Model.DeepSeekOCR2`：模型快照（可选）
+- `DeepSeek.OCR2.Assets.Model`：模型快照（可选）
 - `DeepSeek.OCR2.Bundled`：单包内包含 python+wheels+模型的离线分发方案（包体可能非常大，通常建议私有源）
 - `DeepSeek.OCR2.Full.win-x64`：历史等价包，已停止发布新版本
 
