@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 import time
+import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
@@ -11,13 +12,175 @@ _TOKENIZER = None
 _MODEL = None
 
 
+def _canonical_device(device: str | None) -> str:
+    if not device:
+        return "cpu"
+    d = str(device).strip().lower()
+    if d.startswith("cuda"):
+        return "cuda"
+    if d.startswith("cpu"):
+        return "cpu"
+    return d
+
+
+def _patch_torch_device_redirection(torch, target_device: str, force_dtype=None):
+    target = torch.device(target_device)
+
+    tensor_cuda = getattr(torch.Tensor, "cuda", None)
+    module_cuda = getattr(torch.nn.Module, "cuda", None)
+    tensor_to = getattr(torch.Tensor, "to", None)
+    module_to = getattr(torch.nn.Module, "to", None)
+    tensor_half = getattr(torch.Tensor, "half", None)
+    module_half = getattr(torch.nn.Module, "half", None)
+    tensor_bfloat16 = getattr(torch.Tensor, "bfloat16", None)
+    module_bfloat16 = getattr(torch.nn.Module, "bfloat16", None)
+
+    def _rewrite_dtype(d):
+        if force_dtype is None:
+            return d
+        if d in (getattr(torch, "float16", None), getattr(torch, "bfloat16", None)):
+            return force_dtype
+        return d
+
+    if tensor_cuda is not None and not hasattr(torch.Tensor.cuda, "_deepseek_ocr2_patched"):
+        def _tensor_cuda(self, *args, **kwargs):
+            return self.to(target)
+        _tensor_cuda._deepseek_ocr2_patched = True
+        _tensor_cuda._deepseek_ocr2_original = tensor_cuda
+        torch.Tensor.cuda = _tensor_cuda
+
+    if module_cuda is not None and not hasattr(torch.nn.Module.cuda, "_deepseek_ocr2_patched"):
+        def _module_cuda(self, *args, **kwargs):
+            return self.to(target)
+        _module_cuda._deepseek_ocr2_patched = True
+        _module_cuda._deepseek_ocr2_original = module_cuda
+        torch.nn.Module.cuda = _module_cuda
+
+    if tensor_to is not None and not hasattr(torch.Tensor.to, "_deepseek_ocr2_patched"):
+        def _tensor_to(self, *args, **kwargs):
+            if target.type == "cpu" and args:
+                a0 = args[0]
+                if isinstance(a0, str) and a0.lower().startswith("cuda"):
+                    args = (target,) + tuple(args[1:])
+                elif isinstance(a0, torch.device) and a0.type == "cuda":
+                    args = (target,) + tuple(args[1:])
+                elif isinstance(a0, torch.dtype):
+                    args = (_rewrite_dtype(a0),) + tuple(args[1:])
+                elif len(args) >= 2 and isinstance(args[1], torch.dtype):
+                    args = (args[0], _rewrite_dtype(args[1])) + tuple(args[2:])
+            if target.type == "cpu" and "device" in kwargs:
+                d = kwargs.get("device")
+                if isinstance(d, str) and d.lower().startswith("cuda"):
+                    kwargs["device"] = target
+                elif isinstance(d, torch.device) and d.type == "cuda":
+                    kwargs["device"] = target
+            if target.type == "cpu" and "dtype" in kwargs:
+                kwargs["dtype"] = _rewrite_dtype(kwargs.get("dtype"))
+            return tensor_to(self, *args, **kwargs)
+        _tensor_to._deepseek_ocr2_patched = True
+        _tensor_to._deepseek_ocr2_original = tensor_to
+        torch.Tensor.to = _tensor_to
+
+    if module_to is not None and not hasattr(torch.nn.Module.to, "_deepseek_ocr2_patched"):
+        def _module_to(self, *args, **kwargs):
+            if target.type == "cpu" and args:
+                a0 = args[0]
+                if isinstance(a0, str) and a0.lower().startswith("cuda"):
+                    args = (target,) + tuple(args[1:])
+                elif isinstance(a0, torch.device) and a0.type == "cuda":
+                    args = (target,) + tuple(args[1:])
+                elif isinstance(a0, torch.dtype):
+                    args = (_rewrite_dtype(a0),) + tuple(args[1:])
+                elif len(args) >= 2 and isinstance(args[1], torch.dtype):
+                    args = (args[0], _rewrite_dtype(args[1])) + tuple(args[2:])
+            if target.type == "cpu" and "device" in kwargs:
+                d = kwargs.get("device")
+                if isinstance(d, str) and d.lower().startswith("cuda"):
+                    kwargs["device"] = target
+                elif isinstance(d, torch.device) and d.type == "cuda":
+                    kwargs["device"] = target
+            if target.type == "cpu" and "dtype" in kwargs:
+                kwargs["dtype"] = _rewrite_dtype(kwargs.get("dtype"))
+            return module_to(self, *args, **kwargs)
+        _module_to._deepseek_ocr2_patched = True
+        _module_to._deepseek_ocr2_original = module_to
+        torch.nn.Module.to = _module_to
+
+    if tensor_half is not None and not hasattr(torch.Tensor.half, "_deepseek_ocr2_patched"):
+        def _tensor_half(self, *args, **kwargs):
+            if target.type == "cpu" and force_dtype is not None:
+                return self.to(dtype=force_dtype)
+            return tensor_half(self, *args, **kwargs)
+        _tensor_half._deepseek_ocr2_patched = True
+        _tensor_half._deepseek_ocr2_original = tensor_half
+        torch.Tensor.half = _tensor_half
+
+    if module_half is not None and not hasattr(torch.nn.Module.half, "_deepseek_ocr2_patched"):
+        def _module_half(self, *args, **kwargs):
+            if target.type == "cpu" and force_dtype is not None:
+                return self.to(dtype=force_dtype)
+            return module_half(self, *args, **kwargs)
+        _module_half._deepseek_ocr2_patched = True
+        _module_half._deepseek_ocr2_original = module_half
+        torch.nn.Module.half = _module_half
+
+    if tensor_bfloat16 is not None and not hasattr(torch.Tensor.bfloat16, "_deepseek_ocr2_patched"):
+        def _tensor_bfloat16(self, *args, **kwargs):
+            if target.type == "cpu" and force_dtype is not None:
+                return self.to(dtype=force_dtype)
+            return tensor_bfloat16(self, *args, **kwargs)
+        _tensor_bfloat16._deepseek_ocr2_patched = True
+        _tensor_bfloat16._deepseek_ocr2_original = tensor_bfloat16
+        torch.Tensor.bfloat16 = _tensor_bfloat16
+
+    if module_bfloat16 is not None and not hasattr(torch.nn.Module.bfloat16, "_deepseek_ocr2_patched"):
+        def _module_bfloat16(self, *args, **kwargs):
+            if target.type == "cpu" and force_dtype is not None:
+                return self.to(dtype=force_dtype)
+            return module_bfloat16(self, *args, **kwargs)
+        _module_bfloat16._deepseek_ocr2_patched = True
+        _module_bfloat16._deepseek_ocr2_original = module_bfloat16
+        torch.nn.Module.bfloat16 = _module_bfloat16
+
+
 def _load_model(model_name: str, device: str, dtype: str, attn_impl: str | None):
     global _TOKENIZER, _MODEL
     if _TOKENIZER is not None and _MODEL is not None:
         return _TOKENIZER, _MODEL
 
+    fake = os.getenv("DEEPSEEK_OCR2_FAKE", "").strip().lower()
+    if fake in ("1", "true", "yes", "on"):
+        class _FakeTokenizer:
+            pass
+
+        class _FakeModel:
+            def eval(self):
+                return self
+
+            def cuda(self, *args, **kwargs):
+                return self
+
+            def cpu(self, *args, **kwargs):
+                return self
+
+            def to(self, *args, **kwargs):
+                return self
+
+            def infer(self, tokenizer, prompt="", image_file="", output_path="", base_size=1024, image_size=768, crop_mode=True, save_results=False, **kwargs):
+                return {"text": prompt or "<image>\nFree OCR."}
+
+        _TOKENIZER = _FakeTokenizer()
+        _MODEL = _FakeModel()
+        return _TOKENIZER, _MODEL
+
     from transformers import AutoModel, AutoTokenizer
     import torch
+    device = _canonical_device(device)
+    if device == "cuda" and not torch.cuda.is_available():
+        device = "cpu"
+    if device != "cuda":
+        os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+        _patch_torch_device_redirection(torch, "cpu", force_dtype=torch.float32)
 
     _TOKENIZER = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
@@ -156,7 +319,10 @@ class _Handler(BaseHTTPRequestHandler):
                 },
             )
         except Exception as ex:
-            _send_json(self, 500, {"error": str(ex)})
+            tb = traceback.format_exc()
+            if len(tb) > 6000:
+                tb = tb[-6000:]
+            _send_json(self, 500, {"error": str(ex), "traceback": tb})
 
     def log_message(self, format, *args):
         return
@@ -171,6 +337,7 @@ def main():
     parser.add_argument("--dtype", default=os.getenv("DEEPSEEK_OCR2_DTYPE", "bfloat16"))
     parser.add_argument("--attn-impl", default=os.getenv("DEEPSEEK_OCR2_ATTN_IMPL", "flash_attention_2"))
     args = parser.parse_args()
+    args.device = _canonical_device(args.device)
 
     server = ThreadingHTTPServer((args.host, args.port), _Handler)
     server.model_name = args.model

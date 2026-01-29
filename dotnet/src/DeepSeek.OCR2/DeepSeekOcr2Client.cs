@@ -64,6 +64,15 @@ public sealed class DeepSeekOcr2Client
 #else
                 var responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 #endif
+                if (responseText.IndexOf("Torch not compiled with CUDA enabled", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    throw new HttpRequestException(
+                        $"DeepSeek OCR2 server returned {(int)response.StatusCode} ({response.ReasonPhrase}). " +
+                        "The Python backend reports a CPU-only torch build while attempting to use CUDA. " +
+                        "Fix: set serverOptions.Device=\"cpu\"; or install a CUDA-enabled torch and set serverOptions.TorchInstallPreset=Cuda118 (or TorchInstallPreset=None if you manage your own Python). " +
+                        $"Body: {responseText}");
+                }
+
                 throw new HttpRequestException($"DeepSeek OCR2 server returned {(int)response.StatusCode} ({response.ReasonPhrase}). Body: {responseText}");
             }
 

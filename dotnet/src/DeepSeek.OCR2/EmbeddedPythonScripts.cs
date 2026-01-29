@@ -18,8 +18,6 @@ internal static class EmbeddedPythonScripts
         Directory.CreateDirectory(targetDirectory);
 
         var targetPath = Path.Combine(targetDirectory, ServerFileName);
-        if (File.Exists(targetPath))
-            return targetPath;
 
         var assembly = typeof(EmbeddedPythonScripts).GetTypeInfo().Assembly;
         var resourceName = assembly
@@ -33,7 +31,7 @@ internal static class EmbeddedPythonScripts
         if (stream is null)
             throw new InvalidOperationException($"Failed to open embedded resource: {resourceName}");
 
-        using var file = File.OpenWrite(targetPath);
+        using var file = File.Create(targetPath);
         stream.CopyTo(file);
         return targetPath;
     }
@@ -53,8 +51,6 @@ internal static class EmbeddedPythonScripts
         Directory.CreateDirectory(targetDirectory);
 
         var targetPath = Path.Combine(targetDirectory, fileName);
-        if (File.Exists(targetPath))
-            return targetPath;
 
         var assembly = typeof(EmbeddedPythonScripts).GetTypeInfo().Assembly;
         var resourceName = assembly
@@ -68,7 +64,7 @@ internal static class EmbeddedPythonScripts
         if (stream is null)
             throw new InvalidOperationException($"Failed to open embedded resource: {resourceName}");
 
-        using var file = File.OpenWrite(targetPath);
+        using var file = File.Create(targetPath);
         stream.CopyTo(file);
         return targetPath;
     }

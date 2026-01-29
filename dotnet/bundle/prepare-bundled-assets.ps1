@@ -62,9 +62,22 @@ if (-not $SkipTorch) {
 
 if (-not $SkipModel) {
   Write-Host "Downloading model snapshot into: $modelDir"
-  & $pythonExe -m pip install --upgrade huggingface_hub
-  & $pythonExe (Join-Path $PSScriptRoot "snapshot_hf_model.py") --model $ModelId --out $modelDir
+  $hfTarget = Join-Path $out ("_temp\\hf_hub")
+  if (Test-Path $hfTarget) { Remove-Item -Recurse -Force $hfTarget }
+  New-Item -ItemType Directory -Force -Path $hfTarget | Out-Null
+
+  & $pythonExe -m pip install --upgrade huggingface_hub --target $hfTarget
+
+  $oldPyPath = $env:PYTHONPATH
+  if ([string]::IsNullOrWhiteSpace($oldPyPath)) { $env:PYTHONPATH = $hfTarget } else { $env:PYTHONPATH = "$hfTarget;$oldPyPath" }
+
+  try {
+    & $pythonExe (Join-Path $PSScriptRoot "snapshot_hf_model.py") --model $ModelId --out $modelDir
+  }
+  finally {
+    $env:PYTHONPATH = $oldPyPath
+    Remove-Item -Recurse -Force $hfTarget
+  }
 }
 
 Write-Host "Done. Bundled assets root: $out"
-

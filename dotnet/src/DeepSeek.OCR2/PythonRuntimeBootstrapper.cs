@@ -20,7 +20,7 @@ internal static class PythonRuntimeBootstrapper
 
         var bundledPython = DeepSeekOcr2BundledAssets.TryGetBundledPythonExecutable();
         if (!string.IsNullOrWhiteSpace(bundledPython))
-            return bundledPython;
+            return bundledPython!;
 
         foreach (var candidate in GetSystemCandidates())
         {
@@ -74,16 +74,14 @@ internal static class PythonRuntimeBootstrapper
     private static async Task<string> EnsurePortablePythonOnWindowsAsync(DeepSeekOcr2LocalServerOptions options, CancellationToken cancellationToken)
     {
         var version = string.IsNullOrWhiteSpace(options.PythonRuntimeVersion) ? "3.10.11" : options.PythonRuntimeVersion.Trim();
-        var runtimeDir = options.PythonRuntimeDirectory;
-        if (string.IsNullOrWhiteSpace(runtimeDir))
-        {
-            runtimeDir = Path.Combine(
+        var runtimeDir = string.IsNullOrWhiteSpace(options.PythonRuntimeDirectory)
+            ? Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "DeepSeek.OCR2",
                 "python",
                 version,
-                "win-x64");
-        }
+                "win-x64")
+            : options.PythonRuntimeDirectory!.Trim();
 
         Directory.CreateDirectory(runtimeDir);
 

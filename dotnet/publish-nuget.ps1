@@ -27,7 +27,7 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 }
 
 if (-not $DryRun -and [string]::IsNullOrWhiteSpace($ApiKey)) {
-  throw "ApiKey is required. Pass -ApiKey or set NUGET_API_KEY environment variable."
+  throw "ApiKey is required. Pass -ApiKey or set NUGET_API_KEY. If you used system/user environment variables (or setx), restart the terminal/VS; for current PowerShell session: `$env:NUGET_API_KEY='...'`."
 }
 
 if ($IncludeBundled) {
@@ -49,6 +49,9 @@ foreach ($pkg in $packages) {
   }
   else {
     dotnet nuget push $pkg.FullName --api-key $ApiKey --source $Source --skip-duplicate
+    if ($LASTEXITCODE -ne 0) {
+      throw ("dotnet nuget push failed: " + $pkg.Name)
+    }
   }
 }
 
@@ -61,6 +64,9 @@ foreach ($pkg in $snupkgs) {
   }
   else {
     dotnet nuget push $pkg.FullName --api-key $ApiKey --source $Source --skip-duplicate
+    if ($LASTEXITCODE -ne 0) {
+      throw ("dotnet nuget push failed: " + $pkg.Name)
+    }
   }
 }
 
@@ -77,6 +83,10 @@ if ($UnlistInternal) {
     }
     else {
       dotnet nuget delete $id $Version --api-key $ApiKey --source $Source --non-interactive
+      if ($LASTEXITCODE -ne 0) {
+        Write-Warning ("UNLIST failed (likely missing 'Unlist' permission or not an owner): " + $id + " " + $Version)
+        dotnet --version | Out-Null
+      }
     }
   }
 }

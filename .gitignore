@@ -2,10 +2,24 @@
 .vs/
 .idea/
 
+.verify-venv/
+.venv/
+venv/
+env/
+
 __pycache__/
 *.pyc
 
 dotnet/**/bin/
 dotnet/**/obj/
 dotnet/nupkg/
+dotnet/artifacts/
 artifacts/
+
+*.nupkg
+*.snupkg
+
+# Bundled assets are generated locally/CI for packaging; don't commit them
+dotnet/src/DeepSeek.OCR2/Bundled/python/
+dotnet/src/DeepSeek.OCR2/Bundled/wheels/
+dotnet/src/DeepSeek.OCR2/Bundled/models/

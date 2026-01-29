@@ -28,24 +28,22 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
     {
         options ??= new DeepSeekOcr2LocalServerOptions();
 
-        var host = string.IsNullOrWhiteSpace(options.Host) ? "127.0.0.1" : options.Host;
+        var host = string.IsNullOrWhiteSpace(options.Host) ? "127.0.0.1" : options.Host.Trim();
         var port = options.Port > 0 ? options.Port : GetFreeTcpPort(host);
         var modelName = options.ModelName;
         if (string.Equals(modelName, "deepseek-ai/DeepSeek-OCR-2", StringComparison.Ordinal))
         {
             var bundled = DeepSeekOcr2BundledAssets.TryGetBundledModelDirectory();
             if (!string.IsNullOrWhiteSpace(bundled))
-                modelName = bundled;
+                modelName = bundled!;
         }
 
-        var workingDir = options.WorkingDirectory;
-        if (string.IsNullOrWhiteSpace(workingDir))
-        {
-            workingDir = Path.Combine(
+        var workingDir = string.IsNullOrWhiteSpace(options.WorkingDirectory)
+            ? Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "DeepSeek.OCR2",
-                "server");
-        }
+                "server")
+            : options.WorkingDirectory!.Trim();
 
         Directory.CreateDirectory(workingDir);
         var scriptPath = EmbeddedPythonScripts.ExtractServerScript(workingDir);
@@ -65,14 +63,23 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
                 }
             }
 
-            var venvDir = options.VenvDirectory;
-            if (string.IsNullOrWhiteSpace(venvDir))
+            if (string.Equals(options.Device, "cuda", StringComparison.OrdinalIgnoreCase) &&
+                options.TorchInstallPreset == DeepSeekOcr2TorchInstallPreset.Cpu &&
+                string.IsNullOrWhiteSpace(options.OfflineWheelDirectory))
             {
-                venvDir = Path.Combine(
+                throw new InvalidOperationException(
+                    "Device is set to 'cuda' but TorchInstallPreset is 'Cpu' (and no OfflineWheelDirectory was provided). " +
+                    "This will install a CPU-only torch build and the server will fail with 'Torch not compiled with CUDA enabled'. " +
+                    "Fix: set TorchInstallPreset=Cuda118, or set TorchInstallPreset=None and manage a CUDA-enabled torch in your Python environment, " +
+                    "or provide OfflineWheelDirectory that contains CUDA-enabled torch wheels.");
+            }
+
+            var venvDir = string.IsNullOrWhiteSpace(options.VenvDirectory)
+                ? Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "DeepSeek.OCR2",
-                    "venv");
-            }
+                    "venv")
+                : options.VenvDirectory!.Trim();
 
             var (venvPython, venvPip) = await PythonVenvBootstrapper.EnsureVenvAsync(
                 systemPythonExe: pythonExe,
@@ -156,12 +163,13 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
     {
         var args = new System.Collections.Generic.List<string>();
 
-        if (!string.IsNullOrWhiteSpace(options.OfflineWheelDirectory))
+        var offlineWheelDirectory = options.OfflineWheelDirectory;
+        if (!string.IsNullOrWhiteSpace(offlineWheelDirectory))
         {
             if (options.PreferOfflineWheels)
                 args.Add("--no-index");
             args.Add("--find-links");
-            args.Add(options.OfflineWheelDirectory);
+            args.Add(offlineWheelDirectory!);
         }
 
         return args;
@@ -191,7 +199,7 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
             if (!string.IsNullOrWhiteSpace(indexUrl))
             {
                 args.Add("--index-url");
-                args.Add(indexUrl);
+                args.Add(indexUrl!);
             }
         }
 

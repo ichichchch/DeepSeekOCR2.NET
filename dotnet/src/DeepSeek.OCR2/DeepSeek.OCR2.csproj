@@ -10,7 +10,7 @@
     <IncludeBundledAssets>false</IncludeBundledAssets>
 
     <PackageId>DeepSeek.OCR2.Core</PackageId>
-    <Version>0.3.2</Version>
+    <Version>0.3.4</Version>
     <Title>DeepSeek OCR2 .NET Wrapper</Title>
     <Authors>ichi</Authors>
     <Company>ichi</Company>
@@ -31,7 +31,10 @@
     <RepositoryBranch Condition="'$(RepositoryBranch)' == '' and '$(GITHUB_REF_NAME)' != ''">$(GITHUB_REF_NAME)</RepositoryBranch>
     <RepositoryCommit Condition="'$(RepositoryCommit)' == '' and '$(GITHUB_SHA)' != ''">$(GITHUB_SHA)</RepositoryCommit>
     <PackageReleaseNotes>
+- Reduce client request memory spike by avoiding large intermediate JSON/base64 strings
 - Fix offline wheels auto-detection (avoid --no-index when only placeholder exists)
+- Fix CPU mode where upstream infer may still call .cuda() (redirect CUDA calls to CPU)
+- Always overwrite extracted local server script to avoid stale cached behavior
 - Add one-click API (DeepSeekOcr2/DeepSeekOcr2Session)
 - Add netstandard2.0 target framework
 - Add Windows auto Python+pIP bootstrap (portable python download)
