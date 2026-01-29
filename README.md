@@ -7,6 +7,29 @@ DeepSeekOCR2.NET 是对 **DeepSeek-OCR-2** 的 .NET 封装：通过启动一个�
 - 上游模型（Hugging Face）：https://huggingface.co/deepseek-ai/DeepSeek-OCR-2
 - 上游论文（PDF）：https://github.com/deepseek-ai/DeepSeek-OCR-2/blob/main/DeepSeek_OCR2_paper.pdf
 
+## 仓库目录结构
+
+```text
+DeepSeekOCR2.NET/
+├─ dotnet/                          .NET 封装与打包工程
+│  ├─ src/                          各 NuGet 包的项目
+│  │  ├─ DeepSeek.OCR2/             PackageId=DeepSeek.OCR2.Core（客户端 + 本地服务引导）
+│  │  ├─ DeepSeek.OCR2.Meta/        PackageId=DeepSeek.OCR2（meta 包：拉取 Core + 资产包）
+│  │  ├─ DeepSeek.OCR2.Assets.*     离线资产包（Python / wheels / 模型快照）
+│  │  ├─ DeepSeek.OCR2.Bundled/     单包离线分发（含全部资产，包体很大）
+│  │  └─ DeepSeek.OCR2.Full.win-x64/ 历史等价包（已停更）
+│  ├─ samples/                      示例项目
+│  ├─ tests/                        测试（契约/Smoke）
+│  ├─ bundle/                       生成 bundled 资产的脚本
+│  ├─ pack.ps1                      本地打包脚本
+│  ├─ publish-nuget.ps1             打包并发布到 nuget.org
+│  └─ push.ps1                      仅推送 nupkg
+├─ DeepSeek-OCR2-master/            上游代码快照（便于对照/实验）
+│  └─ requirements.txt              上游脚本依赖（仅用于该目录内的 Python 代码）
+├─ assets/                          README 图片/徽章
+└─ README.md                        本文件
+```
+
 ## 快速开始（.NET）
 
 安装 NuGet（建议从下方“包结构”里按需选择）后：
@@ -51,6 +74,7 @@ Console.WriteLine(result.Text);
 - `DeepSeek.OCR2.Assets.Wheels.win-x64`：离线 wheels/torch（可选）
 - `DeepSeek.OCR2.Assets.Model`：模型快照（可选）
 - `DeepSeek.OCR2.Bundled`：单包内包含 python+wheels+模型的离线分发方案（包体非常大，通常建议私有源）
+- `DeepSeek.OCR2.Full.win-x64`：历史等价包，已停止发布新版本
 
 ## 离线与 Bundled 资产（重要）
 
