@@ -73,6 +73,23 @@ pwsh .\dotnet\bundle\prepare-bundled-assets.ps1 -TorchPreset cpu -ModelId deepse
 pwsh .\dotnet\pack.ps1 -PackBundled
 ```
 
+为什么会很慢：
+
+- `DeepSeek.OCR2.Assets.Model.DeepSeekOCR2` 会把整个模型快照（含 safetensors 权重）打进 nupkg，文件很大，打包时需要大量磁盘读写与压缩。
+- `DeepSeek.OCR2.Assets.Python.win-x64` / `DeepSeek.OCR2.Assets.Wheels.win-x64` 会包含成千上万个文件/whl，NuGet 打包需要枚举、哈希并写入 zip，也会显著耗时（并可能出现 Windows 路径过长警告）。
+
+本地开发如果只想快速产物验证（不追求最小包体），可以用快速打包模式：
+
+```powershell
+pwsh .\dotnet\pack.ps1 -PackBundled -FastPack
+```
+
+如果你只是在改 .NET 客户端代码、并不需要重新产出离线资产包，可以跳过 Assets 包（避免模型/便携 Python 打包耗时）：
+
+```powershell
+pwsh .\dotnet\pack.ps1 -SkipAssets
+```
+
 ## 许可证与致谢
 
 - 本仓库为 .NET 封装与打包工程；模型与论文归上游项目所有。

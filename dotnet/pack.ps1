@@ -3,6 +3,12 @@ param(
   [string]$Output = "artifacts",
   [switch]$PrepareBundledAssets,
   [switch]$PackBundled,
+  [switch]$FastPack,
+  [switch]$SkipAssets,
+  [switch]$SkipAssetsPython,
+  [switch]$SkipAssetsWheels,
+  [switch]$SkipAssetsModel,
+  [switch]$SkipMeta,
   [string]$PythonVersion = "3.10.11",
   [ValidateSet("cpu","cu118")]
   [string]$TorchPreset = "cpu",
@@ -19,16 +25,37 @@ if ($PrepareBundledAssets) {
   & $bundleScript -PythonVersion $PythonVersion -TorchPreset $TorchPreset -ModelId $ModelId -SkipTorch:$SkipTorch -SkipModel:$SkipModel
 }
 
-dotnet pack .\src\DeepSeek.OCR2\DeepSeek.OCR2.csproj -c $Configuration -o .\$Output
-
-if ($PackBundled) {
-  dotnet pack .\src\DeepSeek.OCR2.Bundled\DeepSeek.OCR2.Bundled.csproj -c $Configuration -o .\$Output
+$packCommonArgs = @("-c", $Configuration, "-o", ".\\$Output")
+$packFastArgs = @()
+if ($FastPack) {
+  $packFastArgs = @("-p:NoPackageAnalysis=true", "-p:PackageCompressionLevel=NoCompression")
 }
 
-dotnet pack .\src\DeepSeek.OCR2.Assets.Python.win-x64\DeepSeek.OCR2.Assets.Python.win-x64.csproj -c $Configuration -o .\$Output
-dotnet pack .\src\DeepSeek.OCR2.Assets.Wheels.win-x64\DeepSeek.OCR2.Assets.Wheels.win-x64.csproj -c $Configuration -o .\$Output
-dotnet pack .\src\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2.csproj -c $Configuration -o .\$Output
-dotnet pack .\src\DeepSeek.OCR2.Meta\DeepSeek.OCR2.Meta.csproj -c $Configuration -o .\$Output
+dotnet pack .\src\DeepSeek.OCR2\DeepSeek.OCR2.csproj @packCommonArgs @packFastArgs
+
+if ($PackBundled) {
+  dotnet pack .\src\DeepSeek.OCR2.Bundled\DeepSeek.OCR2.Bundled.csproj @packCommonArgs @packFastArgs
+}
+
+$skipAssetsPython = $SkipAssets -or $SkipAssetsPython
+$skipAssetsWheels = $SkipAssets -or $SkipAssetsWheels
+$skipAssetsModel = $SkipAssets -or $SkipAssetsModel
+
+if (-not $skipAssetsPython) {
+  dotnet pack .\src\DeepSeek.OCR2.Assets.Python.win-x64\DeepSeek.OCR2.Assets.Python.win-x64.csproj @packCommonArgs @packFastArgs
+}
+
+if (-not $skipAssetsWheels) {
+  dotnet pack .\src\DeepSeek.OCR2.Assets.Wheels.win-x64\DeepSeek.OCR2.Assets.Wheels.win-x64.csproj @packCommonArgs @packFastArgs
+}
+
+if (-not $skipAssetsModel) {
+  dotnet pack .\src\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2\DeepSeek.OCR2.Assets.Model.DeepSeekOCR2.csproj @packCommonArgs @packFastArgs
+}
+
+if (-not $SkipMeta) {
+  dotnet pack .\src\DeepSeek.OCR2.Meta\DeepSeek.OCR2.Meta.csproj @packCommonArgs @packFastArgs
+}
 
 }
 finally {
