@@ -200,13 +200,19 @@ pwsh .\dotnet\publish-nuget.ps1 -Version x.y.z -IncludeBundled:$false
 只推送（不做 unlist、不自动 pack，适合你自己控制流程）：
 
 ```powershell
-pwsh .\dotnet\push.ps1 -ApiKey "<your-nuget-api-key>"
+$env:NUGET_API_KEY = "<your-nuget-api-key>"
+pwsh .\dotnet\push.ps1
 ```
 
 GitHub Actions 自动发布：
 
 - 在仓库 Secrets 配置 `NUGET_API_KEY`
 - 推送 tag `v*` 会触发发布工作流
+
+```powershell
+git tag v0.3.8
+git push origin v0.3.8
+```
 
 ## 许可证与归属
 

@@ -53,7 +53,7 @@ jobs:
             "DeepSeek.OCR2.Core",
             "DeepSeek.OCR2.Assets.Python.win-x64",
             "DeepSeek.OCR2.Assets.Wheels.win-x64",
-            "DeepSeek.OCR2.Assets.Model.DeepSeekOCR2"
+            "DeepSeek.OCR2.Assets.Model"
           )
           foreach ($id in $ids) {
             try {
