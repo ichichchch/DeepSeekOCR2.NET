@@ -10,7 +10,7 @@
     <NoWarn>$(NoWarn);NU5128</NoWarn>
 
     <PackageId>DeepSeek.OCR2.Assets.Model</PackageId>
-    <Version>0.3.4</Version>
+    <Version>0.3.7</Version>
     <Title>DeepSeek OCR2 Model Snapshot</Title>
     <Description>Bundled DeepSeek-OCR-2 model snapshot for DeepSeek.OCR2. Copy-to-output via buildTransitive.</Description>
     <PackageTags>deepseek;ocr;model;offline;huggingface</PackageTags>

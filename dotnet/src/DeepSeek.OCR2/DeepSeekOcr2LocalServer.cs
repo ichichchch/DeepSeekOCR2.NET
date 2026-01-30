@@ -74,37 +74,75 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
                     "or provide OfflineWheelDirectory that contains CUDA-enabled torch wheels.");
             }
 
-            var venvDir = string.IsNullOrWhiteSpace(options.VenvDirectory)
-                ? Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "DeepSeek.OCR2",
-                    "venv")
-                : options.VenvDirectory!.Trim();
+            var pythonWorkingDir = Path.GetDirectoryName(pythonExe) ?? workingDir;
+            var supportsVenv = await SupportsVenvAsync(pythonExe, pythonWorkingDir, cancellationToken).ConfigureAwait(false);
 
-            var (venvPython, venvPip) = await PythonVenvBootstrapper.EnsureVenvAsync(
-                systemPythonExe: pythonExe,
-                venvDir: venvDir,
-                bootstrapDownloadTimeout: options.BootstrapDownloadTimeout,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
-
-            var basePipArgs = BuildPipCommonArgs(options);
-
-            if (options.TorchInstallPreset != DeepSeekOcr2TorchInstallPreset.None)
+            if (supportsVenv)
             {
-                var torchArgs = BuildTorchInstallArgs(options);
-                torchArgs.AddRange(basePipArgs);
-                await PythonVenvBootstrapper.PipInstallAsync(venvPip, venvDir, torchArgs, cancellationToken).ConfigureAwait(false);
+                var venvDir = string.IsNullOrWhiteSpace(options.VenvDirectory)
+                    ? Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "DeepSeek.OCR2",
+                        "venv")
+                    : options.VenvDirectory!.Trim();
+
+                var (venvPython, venvPip) = await PythonVenvBootstrapper.EnsureVenvAsync(
+                    systemPythonExe: pythonExe,
+                    venvDir: venvDir,
+                    bootstrapDownloadTimeout: options.BootstrapDownloadTimeout,
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
+
+                var basePipArgs = BuildPipCommonArgs(options);
+
+                if (options.TorchInstallPreset != DeepSeekOcr2TorchInstallPreset.None)
+                {
+                    var torchArgs = BuildTorchInstallArgs(options);
+                    torchArgs.AddRange(basePipArgs);
+                    await PythonVenvBootstrapper.PipInstallAsync(venvPip, venvDir, torchArgs, cancellationToken).ConfigureAwait(false);
+                }
+
+                var runtimeReq = EmbeddedPythonScripts.ExtractRuntimeRequirements(workingDir);
+                var reqArgs = new System.Collections.Generic.List<string> { "-r", runtimeReq };
+                reqArgs.AddRange(basePipArgs);
+                if (options.PipInstallArguments is { Length: > 0 })
+                    reqArgs.AddRange(options.PipInstallArguments);
+
+                await PythonVenvBootstrapper.PipInstallAsync(venvPip, venvDir, reqArgs, cancellationToken).ConfigureAwait(false);
+
+                pythonExe = venvPython;
             }
+            else
+            {
+                await PythonPipBootstrapper.EnsurePipAsync(
+                    pythonExe,
+                    pythonWorkingDir,
+                    options.BootstrapDownloadTimeout,
+                    cancellationToken).ConfigureAwait(false);
 
-            var runtimeReq = EmbeddedPythonScripts.ExtractRuntimeRequirements(workingDir);
-            var reqArgs = new System.Collections.Generic.List<string> { "-r", runtimeReq };
-            reqArgs.AddRange(basePipArgs);
-            if (options.PipInstallArguments is { Length: > 0 })
-                reqArgs.AddRange(options.PipInstallArguments);
+                await RunPythonAsync(
+                    pythonExe,
+                    pythonWorkingDir,
+                    new[] { "-m", "pip", "install", "--upgrade", "pip" },
+                    cancellationToken).ConfigureAwait(false);
 
-            await PythonVenvBootstrapper.PipInstallAsync(venvPip, venvDir, reqArgs, cancellationToken).ConfigureAwait(false);
+                var basePipArgs = BuildPipCommonArgs(options);
 
-            pythonExe = venvPython;
+                if (options.TorchInstallPreset != DeepSeekOcr2TorchInstallPreset.None)
+                {
+                    var torchArgs = new System.Collections.Generic.List<string> { "-m", "pip", "install" };
+                    torchArgs.AddRange(BuildTorchInstallArgs(options));
+                    torchArgs.AddRange(basePipArgs);
+                    await RunPythonAsync(pythonExe, pythonWorkingDir, torchArgs, cancellationToken).ConfigureAwait(false);
+                }
+
+                var runtimeReq = EmbeddedPythonScripts.ExtractRuntimeRequirements(workingDir);
+                var reqArgs = new System.Collections.Generic.List<string> { "-m", "pip", "install", "-r", runtimeReq };
+                reqArgs.AddRange(basePipArgs);
+                if (options.PipInstallArguments is { Length: > 0 })
+                    reqArgs.AddRange(options.PipInstallArguments);
+
+                await RunPythonAsync(pythonExe, pythonWorkingDir, reqArgs, cancellationToken).ConfigureAwait(false);
+            }
         }
 
         var psi = new ProcessStartInfo
@@ -279,5 +317,68 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
     {
         var s = uri.ToString();
         return s.EndsWith("/", StringComparison.Ordinal) ? uri : new Uri(s + "/", UriKind.Absolute);
+    }
+
+    private static async Task<bool> SupportsVenvAsync(string pythonExe, string workingDirectory, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = pythonExe,
+                WorkingDirectory = workingDirectory,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            ProcessUtil.AddArguments(psi, new[] { "-c", "import venv" });
+
+            using var process = new Process { StartInfo = psi };
+            if (!process.Start())
+                return false;
+
+            await ProcessUtil.WaitForExitAsync(process, cancellationToken).ConfigureAwait(false);
+            return process.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static async Task RunPythonAsync(
+        string pythonExe,
+        string workingDirectory,
+        System.Collections.Generic.IReadOnlyList<string> arguments,
+        CancellationToken cancellationToken)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = pythonExe,
+            WorkingDirectory = workingDirectory,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+        };
+        ProcessUtil.AddArguments(psi, arguments);
+
+        using var process = new Process { StartInfo = psi };
+        if (!process.Start())
+            throw new InvalidOperationException($"Failed to start process: {pythonExe}");
+
+        var stdoutTask = process.StandardOutput.ReadToEndAsync();
+        var stderrTask = process.StandardError.ReadToEndAsync();
+
+        await ProcessUtil.WaitForExitAsync(process, cancellationToken).ConfigureAwait(false);
+        var stdout = await stdoutTask.ConfigureAwait(false);
+        var stderr = await stderrTask.ConfigureAwait(false);
+
+        if (process.ExitCode != 0)
+        {
+            var output = string.IsNullOrWhiteSpace(stderr) ? stdout : stderr;
+            throw new InvalidOperationException($"Process failed: {pythonExe}. ExitCode={process.ExitCode}. Output: {output}");
+        }
     }
 }

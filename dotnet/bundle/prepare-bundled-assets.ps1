@@ -5,7 +5,7 @@ param(
   [ValidateSet("cpu","cu118")]
   [string]$TorchPreset = "cpu",
   [string]$ModelId = "deepseek-ai/DeepSeek-OCR-2",
-  [string]$OutputDir = "..\\src\\DeepSeek.OCR2\\Bundled",
+  [string]$OutputDir = "src\\DeepSeek.OCR2\\Bundled",
   [switch]$SkipTorch,
   [switch]$SkipModel
 )
@@ -13,7 +13,8 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$out = Resolve-Path (Join-Path $repoRoot $OutputDir)
+$out = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $OutputDir))
+New-Item -ItemType Directory -Force -Path $out | Out-Null
 
 $pythonDir = Join-Path $out ("python\\$Rid\\$PythonVersion")
 $wheelsDir = Join-Path $out ("wheels\\$Rid")
@@ -36,14 +37,6 @@ if (!(Test-Path $pythonExe)) {
   [IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $pythonDir, $true)
 }
 
-Write-Host "Bootstrapping pip for embeddable Python"
-$getPip = Join-Path $pythonDir "get-pip.py"
-if (!(Test-Path $getPip)) {
-  Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile $getPip
-}
-
-& $pythonExe $getPip "--disable-pip-version-check" "--no-warn-script-location"
-
 $pth = Get-ChildItem -Path $pythonDir -Filter "python*._pth" | Select-Object -First 1
 if ($pth) {
   $lines = Get-Content $pth.FullName
@@ -51,6 +44,17 @@ if ($pth) {
   $lines = $lines | ForEach-Object { if ($_ -eq "#import site") { "import site" } else { $_ } }
   if ($lines -notcontains "import site") { $lines += "import site" }
   Set-Content -Path $pth.FullName -Value ($lines -join "`r`n") -Encoding UTF8
+}
+
+$needPip = (-not $SkipTorch) -or (-not $SkipModel)
+if ($needPip) {
+  Write-Host "Bootstrapping pip for embeddable Python"
+  $getPip = Join-Path $pythonDir "get-pip.py"
+  if (!(Test-Path $getPip)) {
+    Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile $getPip
+  }
+
+  & $pythonExe $getPip "--disable-pip-version-check" "--no-warn-script-location"
 }
 
 if (-not $SkipTorch) {
