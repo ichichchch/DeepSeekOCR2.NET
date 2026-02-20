@@ -12,12 +12,14 @@ namespace DeepSeek.OCR2;
 public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
 {
     private readonly Process _process;
+    private readonly PythonOutputReceivedHandler? _outputCallback;
     private bool _disposed;
 
-    private DeepSeekOcr2LocalServer(Uri baseUri, Process process)
+    private DeepSeekOcr2LocalServer(Uri baseUri, Process process, PythonOutputReceivedHandler? outputCallback)
     {
         BaseUri = baseUri;
         _process = process;
+        _outputCallback = outputCallback;
     }
 
     public Uri BaseUri { get; }
@@ -170,11 +172,18 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
         if (!process.Start())
             throw new InvalidOperationException("Failed to start DeepSeek OCR2 python server process.");
 
+        var outputCallback = options.OutputDataReceived;
+
         _ = Task.Run(async () =>
         {
             try
             {
-                _ = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
+                while (!process.StandardOutput.EndOfStream)
+                {
+                    var line = await process.StandardOutput.ReadLineAsync().ConfigureAwait(false);
+                    if (line != null)
+                        outputCallback?.Invoke(line, isError: false);
+                }
             }
             catch
             {
@@ -184,7 +193,12 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
         {
             try
             {
-                _ = await process.StandardError.ReadToEndAsync().ConfigureAwait(false);
+                while (!process.StandardError.EndOfStream)
+                {
+                    var line = await process.StandardError.ReadLineAsync().ConfigureAwait(false);
+                    if (line != null)
+                        outputCallback?.Invoke(line, isError: false);
+                }
             }
             catch
             {
@@ -194,7 +208,7 @@ public sealed class DeepSeekOcr2LocalServer : IAsyncDisposable, IDisposable
         var baseUri = new UriBuilder(Uri.UriSchemeHttp, host, port).Uri;
         await WaitForReadyAsync(baseUri, options.StartupTimeout, process, cancellationToken).ConfigureAwait(false);
 
-        return new DeepSeekOcr2LocalServer(baseUri, process);
+        return new DeepSeekOcr2LocalServer(baseUri, process, outputCallback);
     }
 
     private static System.Collections.Generic.List<string> BuildPipCommonArgs(DeepSeekOcr2LocalServerOptions options)

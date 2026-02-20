@@ -2,6 +2,13 @@ using System;
 
 namespace DeepSeek.OCR2;
 
+/// <summary>
+/// Callback delegate for receiving Python process output (stdout/stderr).
+/// </summary>
+/// <param name="data">The output line from Python process.</param>
+/// <param name="isError">True if from stderr, false if from stdout.</param>
+public delegate void PythonOutputReceivedHandler(string data, bool isError);
+
 public sealed record DeepSeekOcr2LocalServerOptions
 {
     public string PythonExecutablePath { get; init; } = "";
@@ -49,4 +56,10 @@ public sealed record DeepSeekOcr2LocalServerOptions
     public TimeSpan OcrRequestTimeout { get; init; } = TimeSpan.FromMinutes(30);
 
     public TimeSpan BootstrapDownloadTimeout { get; init; } = TimeSpan.FromMinutes(30);
+
+    /// <summary>
+    /// Callback to receive Python process output (stdout/stderr) in real-time.
+    /// This includes tqdm progress bars, model loading messages, and inference logs.
+    /// </summary>
+    public PythonOutputReceivedHandler? OutputDataReceived { get; init; }
 }
