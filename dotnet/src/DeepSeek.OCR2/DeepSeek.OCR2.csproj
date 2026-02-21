@@ -10,7 +10,7 @@
     <IncludeBundledAssets>false</IncludeBundledAssets>
 
     <PackageId>DeepSeek.OCR2.Core</PackageId>
-    <Version>0.3.7</Version>
+    <Version>0.3.9</Version>
     <Title>DeepSeek OCR2 .NET Wrapper</Title>
     <Authors>ichi</Authors>
     <Company>ichi</Company>
@@ -31,6 +31,7 @@
     <RepositoryBranch Condition="'$(RepositoryBranch)' == '' and '$(GITHUB_REF_NAME)' != ''">$(GITHUB_REF_NAME)</RepositoryBranch>
     <RepositoryCommit Condition="'$(RepositoryCommit)' == '' and '$(GITHUB_SHA)' != ''">$(GITHUB_SHA)</RepositoryCommit>
     <PackageReleaseNotes>
+- Add Python process output callback for real-time progress feedback (stdout/stderr streaming with tqdm support)
 - Reduce client request memory spike by avoiding large intermediate JSON/base64 strings
 - Fix offline wheels auto-detection (avoid --no-index when only placeholder exists)
 - Fix CPU mode where upstream infer may still call .cuda() (redirect CUDA calls to CPU)

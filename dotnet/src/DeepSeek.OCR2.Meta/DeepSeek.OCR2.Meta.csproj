@@ -10,7 +10,7 @@
     <NoWarn>$(NoWarn);NU5128</NoWarn>
 
     <PackageId>DeepSeek.OCR2</PackageId>
-    <Version>0.3.7</Version>
+    <Version>0.3.9</Version>
     <Title>DeepSeek OCR2 .NET Wrapper</Title>
     <Description>Meta-package that pulls DeepSeek.OCR2.Core plus offline assets packages.</Description>
     <PackageTags>deepseek;ocr;offline;full;meta</PackageTags>

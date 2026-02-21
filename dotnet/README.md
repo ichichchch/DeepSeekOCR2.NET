@@ -1,43 +1,45 @@
 # DeepSeek.OCR2 (.NET / NuGet)
 
-DeepSeek.OCR2 提供一个“本地 Python 推理服务 + .NET 客户端”的封装：在本机启动 Python HTTP 服务完成推理，由 .NET 端通过 HTTP 调用执行 OCR。
+DeepSeek.OCR2 是一个高性能 OCR 识别库，基于 **DeepSeek-OCR-2** 模型构建，提供简洁的 .NET API 接口。
 
-- `DeepSeekOcr2LocalServer`：从包内释放 Python HTTP Server 脚本，按需准备 Python/venv/依赖，然后启动子进程（模型进程可复用）。
-- `DeepSeekOcr2Client`：通过 HTTP 调用 `POST /ocr` 执行 OCR 推理。
-- `DeepSeekOcr2` / `DeepSeekOcr2Session`：一键启动/复用服务的便捷入口。
+- `DeepSeekOcr2` / `DeepSeekOcr2Session`：一键启动/复用服务的便捷入口
+- `DeepSeekOcr2Client`：执行 OCR 识别的客户端
+- `DeepSeekOcr2LocalServer`：本地服务管理器（自动处理依赖和模型加载）
 
-## 安装（先选包）
+## 安装
 
-推荐只记住两种用法（绝大多数用户足够用）：
-
-- 在线/自动安装（包体小）：引用 `DeepSeek.OCR2.Core`
-- 离线/可选资产（更省心）：引用 `DeepSeek.OCR2`（meta 包，会自动拉取资产包）
+推荐使用 `DeepSeek.OCR2` 包（自动包含所需依赖）：
 
 ```powershell
-dotnet add package DeepSeek.OCR2.Core
-# or
 dotnet add package DeepSeek.OCR2
 ```
 
-仓库中实际会发布这些包（了解即可）：
+或者使用核心包（更小的包体，首次运行会自动下载所需组件）：
 
-- `DeepSeek.OCR2.Core`：.NET 客户端 + 本地 Python 服务引导（默认不含模型权重）
-- `DeepSeek.OCR2`：meta 包 = Core + `DeepSeek.OCR2.Assets.*`（离线 Python / wheels / 模型）
-- `DeepSeek.OCR2.Assets.Python.win-x64`：Windows 便携 Python（可选）
-- `DeepSeek.OCR2.Assets.Wheels.win-x64`：离线 wheels/torch（可选）
+```powershell
+dotnet add package DeepSeek.OCR2.Core
+```
+
+### 可用包说明
+
+- `DeepSeek.OCR2.Core`：核心客户端 + 自动环境配置（默认在线安装依赖）
+- `DeepSeek.OCR2`：完整包 = Core + 离线资产包（Python / wheels / 模型）
+- `DeepSeek.OCR2.Assets.Python.win-x64`：Windows 便携 Python 环境（可选）
+- `DeepSeek.OCR2.Assets.Wheels.win-x64`：离线依赖包（可选）
 - `DeepSeek.OCR2.Assets.Model`：模型快照（可选）
-- `DeepSeek.OCR2.Bundled`：单包内包含 python+wheels+模型的离线分发方案（包体可能非常大，通常建议私有源）
-- `DeepSeek.OCR2.Full.win-x64`：历史等价包，已停止发布新版本
+- `DeepSeek.OCR2.Bundled`：单包全量离线版本（包体较大，适合私有源）
 
 ## 先决条件
 
-- Windows：默认无需预装 Python。`AutoSetupPython=true` 时会在首次运行自动下载便携 Python 并引导 pip/venv。
-- Linux/macOS：建议预装 Python 3.10+，并用 `PythonExecutablePath` 指定；或自行关闭 `AutoSetupPython/EnsureVenv` 并管理环境。
-- 依赖安装：默认会创建 venv 并安装 torch + runtime requirements；也支持离线 wheels（见下文）。
+- **Windows**：无需预装 Python，首次运行会自动配置所需环境
+- **Linux/macOS**：建议预装 Python 3.10+
+- **首次运行**：会自动下载模型和依赖项，请耐心等待
 
 ## 快速开始
 
-最简单：识别一张图片文件（内部自动启动本地服务）：
+### 基本使用
+
+识别一张图片：
 
 ```csharp
 using DeepSeek.OCR2;
@@ -46,21 +48,27 @@ var result = await DeepSeekOcr2.RecognizeFileAsync(@"D:\test.jpg");
 Console.WriteLine(result.Text);
 ```
 
-复用同一个模型进程（多次调用更快）：
+### 复用会话（性能更优）
+
+多次调用时复用模型实例，速度更快：
 
 ```csharp
 using DeepSeek.OCR2;
 
 await using var session = await DeepSeekOcr2.CreateSessionAsync();
 
-var request = DeepSeekOcr2Request.FromFile(@"D:\test.jpg") with { Prompt = "<image>\nFree OCR." };
+var request = DeepSeekOcr2Request.FromFile(@"D:\test.jpg") with 
+{
+    Prompt = "<image>\nFree OCR."
+};
+
 var result = await session.Client.RecognizeAsync(request);
 Console.WriteLine(result.Text);
 ```
 
-## 常用配置（DeepSeekOcr2LocalServerOptions）
+## 常用配置
 
-你可以在创建 session 时传入 options：
+### 基础配置示例
 
 ```csharp
 using System;
@@ -68,48 +76,62 @@ using DeepSeek.OCR2;
 
 var options = new DeepSeekOcr2LocalServerOptions
 {
-  Device = "cpu",
-  DType = "float32",
-  TorchInstallPreset = DeepSeekOcr2TorchInstallPreset.Cpu,
-  OcrRequestTimeout = TimeSpan.FromMinutes(30),
+    // 设备选择："cpu" 或 "cuda"
+    Device = "cpu",
+    
+    // 计算精度："float32" 或 "float16"
+    DType = "float32",
+    
+    // 超时设置
+    OcrRequestTimeout = TimeSpan.FromMinutes(30),
 };
 
 await using var session = await DeepSeekOcr2.CreateSessionAsync(options);
-var result = await session.Client.RecognizeAsync(DeepSeekOcr2Request.FromFile(@"D:\test.jpg"));
+var result = await session.Client.RecognizeAsync(
+    DeepSeekOcr2Request.FromFile(@"D:\test.jpg")
+);
 ```
 
-超时与首启动：
+### 超时设置
 
-- `OcrRequestTimeout`：单次 OCR 请求超时（默认 30 分钟）。设为 `<= 0` 会变成无限超时（`Timeout.InfiniteTimeSpan`）。
-- `BootstrapDownloadTimeout`：下载便携 Python / 其它引导步骤的超时。
-- `StartupTimeout`：等待 `GET /health` 变为可用的超时。
+- `OcrRequestTimeout`：单次 OCR 请求超时（默认 30 分钟）
+- `BootstrapDownloadTimeout`：首次启动时下载组件的超时时间
+- `StartupTimeout`：等待服务启动的超时时间
 
-Python/venv：
+### 性能优化
 
-- `PythonExecutablePath`：指定系统 Python（Linux/macOS 常用）。
-- `AutoSetupPython`：是否自动下载/准备 Windows 便携 Python。
-- `EnsureVenv` / `VenvDirectory`：是否创建并使用 venv。
+**GPU 加速**（需要 CUDA 环境）：
 
-Torch 安装与离线 wheels：
+```csharp
+var options = new DeepSeekOcr2LocalServerOptions
+{
+    Device = "cuda",           // 使用 GPU
+    DType = "float16",         // 降低显存占用
+};
+```
 
-- `TorchInstallPreset`：`Cpu`（默认）/ `Cuda118` / `None`（`DeepSeekOcr2TorchInstallPreset`）
-- `OfflineWheelDirectory`：离线 wheel 目录（会传给 pip：`--find-links <dir>`）
-- `PreferOfflineWheels`：为 true 时额外加 `--no-index`（强制只从离线目录找）
-- `TorchVersion/TorchVisionVersion/TorchAudioVersion`：按需锁定版本
+### 高级配置
 
-模型与推理参数（传给 Python 服务）：
+**自定义模型和端口**：
 
-- `ModelName`：默认 `deepseek-ai/DeepSeek-OCR-2`
-- `Device`：默认 `cpu`
-- `DType`：默认 `float32`
-- `AttnImpl`：默认 `sdpa`
-- `Host` / `Port`：本地服务监听地址与端口（`Port=0` 自动找空闲端口）
+```csharp
+var options = new DeepSeekOcr2LocalServerOptions
+{
+    ModelName = "deepseek-ai/DeepSeek-OCR-2",  // 模型名称
+    Host = "localhost",                         // 监听地址
+    Port = 0,                                   // 0=自动找空闲端口
+};
+```
 
-性能与 GPU（高级用法）：
+**离线模式**：
 
-- `Device="cuda"`：使用 GPU（前提：你的 Python 环境能用 CUDA）
-- `DType="float16"` / `DType="bfloat16"`：降低显存占用、可能更快
-- `AttnImpl="flash_attention_2"`：如环境支持可更快；不支持时服务端会自动降级
+```csharp
+var options = new DeepSeekOcr2LocalServerOptions
+{
+    OfflineWheelDirectory = @"C:\wheels",       // 离线依赖目录
+    PreferOfflineWheels = true,                 // 强制使用离线依赖
+};
+```
 
 ## 配置模板（contentFiles）
 
@@ -145,33 +167,46 @@ pwsh .\dotnet\pack.ps1 -PackBundled
 
 ## 故障排查
 
-首次调用很慢/超时：
+### 首次运行很慢
 
-- 首次启动可能需要创建 venv、安装依赖、下载模型并完成初始化，耗时可能超过默认 HttpClient 100 秒。把 `OcrRequestTimeout` 调大即可。
+首次启动需要下载模型和依赖项，可能需要较长时间。后续运行将直接使用本地缓存，速度会快很多。
 
-Visual Studio 调试时弹窗 “DotNetDebugServicesOutOfMemory”：
+如果担心超时，可以调大超时时间：
 
-- 多见于调试器/诊断工具在采集大量大对象分配时自身内存耗尽。
-- 建议关闭“启用诊断工具(调试时)”或用 Ctrl+F5 跑通首启动，再附加调试。
+```csharp
+var options = new DeepSeekOcr2LocalServerOptions
+{
+    OcrRequestTimeout = TimeSpan.FromMinutes(60),
+};
+```
 
-离线 wheels 不生效：
+### 内存不足错误
 
-- 确认 `OfflineWheelDirectory` 指向目录内真的有 `.whl` 文件。
-- 如需要严格离线，设置 `PreferOfflineWheels=true`（会加 `--no-index`）。
+调试时如遇到内存相关错误提示：
 
-Torch not compiled with CUDA enabled：
+- 关闭"启用诊断工具 (调试时)"
+- 或先用 Ctrl+F5 跑通首次启动，再附加调试
 
-- 你把 `Device` 设成了 `cuda`，但当前 Python 环境里的 torch 是 CPU-only 版本。
-- 解决：把 `Device` 改为 `cpu`；或设置 `TorchInstallPreset=DeepSeekOcr2TorchInstallPreset.Cuda118` 让 venv 安装 CUDA 版 torch；或 `TorchInstallPreset=DeepSeekOcr2TorchInstallPreset.None` 并自行维护 CUDA torch。
+### GPU 相关问题
 
-## HTTP 协议
+如果设置 `Device="cuda"` 但报错，可能是因为：
 
-- `GET /health`：健康检查（返回 `{ "ok": true }`）
-- `POST /ocr`：JSON 请求体（关键字段）
-  - `image_base64`：图片内容（Base64）
-  - `prompt`：提示词（通常需要包含 `<image>`）
-  - `output_dir`：可选，输出目录
-  - `base_size` / `image_size` / `crop_mode` / `save_results`：与官方 `model.infer` 参数一致
+- 当前环境没有安装 CUDA 版本的依赖
+- 解决方法：改用 `Device="cpu"` 或使用完整包自动配置 CUDA 环境
+
+## 工作原理
+
+DeepSeek.OCR2 在本地启动一个优化的推理服务，.NET 客户端通过本地 HTTP 接口调用：
+
+- **自动配置**：首次运行自动准备环境和依赖
+- **智能缓存**：模型和依赖缓存在本地，后续离线使用
+- **进程复用**：`session` 模式可复用模型实例，大幅提升性能
+- **健康检查**：自动检测服务状态，确保可用性
+
+HTTP 接口：
+
+- `GET /health`：健康检查
+- `POST /ocr`：执行 OCR 识别
 
 ## 仓库维护者：本地打包 / 发布到 nuget.org
 
@@ -216,5 +251,6 @@ git push origin v0.3.8
 
 ## 许可证与归属
 
-- 上游仓库 DeepSeek-OCR-2 的许可证为 Apache License 2.0（见仓库根目录 LICENSE.txt）。
-- 本封装仓库地址：https://github.com/ichichchch/DeepSeekOCR2.NET
+- 本项目基于 DeepSeek-OCR-2 模型构建
+- 上游项目许可证：Apache License 2.0
+- 本封装项目地址：https://github.com/ichichchch/DeepSeekOCR2.NET

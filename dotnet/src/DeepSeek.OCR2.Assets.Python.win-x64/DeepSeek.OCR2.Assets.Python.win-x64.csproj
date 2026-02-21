@@ -11,7 +11,7 @@
     <NoDefaultExcludes>true</NoDefaultExcludes>
 
     <PackageId>DeepSeek.OCR2.Assets.Python.win-x64</PackageId>
-    <Version>0.3.7</Version>
+    <Version>0.3.8</Version>
     <Title>DeepSeek OCR2 Bundled Python Runtime (win-x64)</Title>
     <Description>Bundled Python runtime for DeepSeek.OCR2 (win-x64). Copy-to-output via buildTransitive.</Description>
     <PackageTags>deepseek;ocr;python;runtime;offline;win-x64</PackageTags>
